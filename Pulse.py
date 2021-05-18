@@ -134,12 +134,12 @@ class PulseRabi(object):
     def get_phase(self):
         return self.phase              
 
-def create(amp, sample_rate, data,fil):
+def create(amp, sample_rate, data,fil,ch=1):
     """
     this creates the string to send to the awg for loading the waveform
     Takes in parameters : amplitude, sample_rate and data= array of int16 value
     """
-    res = """Channel Count:1
+    res = """Channel Count:%s
     Sample Rate:%s
     High Level:%s
     Low Level:%s
@@ -147,11 +147,10 @@ def create(amp, sample_rate, data,fil):
     Filter:"%s"
     Data Points:%i
     Data:
- """%(sample_rate, min(data/32767 * amp)+2*amp,  min(data/32767 * amp),fil,len(data))
+ """%(ch,sample_rate, min(data/32767 * amp)+2*amp,  min(data/32767 * amp),fil,len(data))
     s = StringIO()
     np.savetxt(s, data, fmt='%i')
     res += s.getvalue()
-    print res
     return res.replace('\n', '\r\n')
 
 def pulse_readout(awg1, steplist, timelist, sample_rate, ampl,filename):
@@ -178,14 +177,19 @@ def pulse_readout(awg1, steplist, timelist, sample_rate, ampl,filename):
     awg1.send_file(FILE, src_data=pulsedata, overwrite=True)
     awg1.arb_load_file(FILE, clear=True)
 
-def pulse_rabi(awg1,freq,plateau_time,ampl,sample_rate,phase,start_time,total_time,filename):
+def pulse_rabi(awg1,freq,plateau_time,ampl,sample_rate,phase,start_time,total_time,filename,IQ=True,phaseDiff=90):
     """
     This generate the right timelist and steplist for a rabi pulse
     implying you use a ssb mixer
     """
     if start_time !=0:
         start_time = start_time + plateau_time/2
-    timelist, steplist = np.zeros(int(sample_rate*total_time)),np.zeros(int(sample_rate*total_time))
+
+    timelist, vI = np.zeros(int(sample_rate*total_time)),np.zeros(int(sample_rate*total_time))
+    vQ=np.zeros(int(sample_rate*total_time))
+    phaseDiff = phaseDiff*np.pi/180
+
+
 
     index = np.arange(max(np.round((start_time-plateau_time/2)*sample_rate), 0),
                     min(np.round((start_time+plateau_time)*sample_rate), sample_rate*total_time))
@@ -195,22 +199,36 @@ def pulse_rabi(awg1,freq,plateau_time,ampl,sample_rate,phase,start_time,total_ti
     pulse_value = ampl * pulse_value
     freq = 2*np.pi*freq
     vI_ssbm = pulse_value * (np.cos(freq*pulse_time - phase))
+    vQ_ssbm =-pulse_value * (np.sin(freq*pulse_time - phase + phaseDiff))
     timelist=np.linspace(0,total_time,int(sample_rate*total_time))
-    steplist[index] += vI_ssbm
-    plot(timelist*1e6,steplist,'-o')
+    vI[index] += vI_ssbm
+    vQ[index] += vQ_ssbm
+    plot(timelist*1e6,vI,'-o')
+    plot(timelist*1e6,vQ,'-o')
     plt.show()
     
-    
     #creat and send the data set to awg 
-    data=[]
-    for a in steplist:
-        data.append(int(a*32767/ampl))
-    data = where(data < -32767, -32767, data)
-    data = where(data>32767, 32767, data)
-    pulsedata = create(ampl, sample_rate, data,fil='normal')
+    dataI=[]
+    dataQ=[]
+    for i,q in zip (vI,vQ):
+        dataI.append(int(i*32767/ampl))
+        dataQ.append(int(q*32767/ampl))
+    dataI = where(dataI < -32767, -32767, dataI)
+    dataI = where(dataI>32767, 32767, dataI)
+    dataQ = where(dataQ < -32767, -32767, dataQ)
+    dataQ = where(dataQ>32767, 32767, dataQ)
+    pulsedata = create(ampl, sample_rate, dataI,fil='normal',ch=1)
     FILE=r'int:\%s'%(filename)
     awg1.send_file(FILE, src_data=pulsedata, overwrite=True)
     awg1.arb_load_file(FILE, clear=True)
+
+    #Envoie la waveform dephase au ch=2
+    if IQ:
+        pulsedata = create(ampl, sample_rate, data,fil='normal',ch=2)
+        FILE=r'int:\%s'%(filename)
+        awg1.send_file(FILE, src_data=pulsedata, overwrite=True)
+        awg1.arb_load_file(FILE, clear=True)
+
     return steplist
 
 ########################################################
