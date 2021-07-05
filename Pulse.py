@@ -18,14 +18,13 @@ class PulseReadout(object):
     Parameter : 
     AWG instrument ; steplist of the waveform ; timelist of the waveform
     change index = index for the step that to sweep
-    ampl = amplitude
     sample rate
     Change the steplist by steplist =  ***
     The set and get defines the value of the steplist at the change index
     Creating the pulse DOES NOT loads it automaticaly. you have to perform a set
     """
 
-    def __init__(self, awg, steplist, timelist, change_index, ampl, sample_rate=100,pulsefilename='test.arb'):
+    def __init__(self, awg, steplist, timelist, change_index, ampl, sample_rate=100,pulsefilename='test.arb',ch=1,reshape=True):
         self.awg = awg
         self.steplist = steplist
         self.timelist = timelist
@@ -33,13 +32,15 @@ class PulseReadout(object):
         self.ampl = ampl
         self.sample_rate = sample_rate
         self.pulsefilename= pulsefilename
-        self.devAmp = instruments.FunctionWrap(self.set_steplist, self.get_steplist, basedev=self.awg, min=-ampl, max=ampl)
+        self.ch=ch
+        self.reshape=reshape
+        self.devAmp = instruments.FunctionWrap(self.set_steplist, self.get_steplist, basedev=self.awg, min=-self.ampl, max=self.ampl)
         self.devtime = instruments.FunctionWrap(self.set_timelist, self.get_timelist, basedev=self.awg, min=0, max=sum(timelist))
         if len(steplist) != len(timelist):
             raise ValueError('number of step not the same size as the duration time list')
         if  min(timelist) < (1.0/sample_rate):
            raise ValueError('Sample rate too low for time resolution required')
-        pulse_readout(self.awg, steplist, self.timelist, self.sample_rate, self.ampl,self.pulsefilename)
+        # pulse_readout(self.awg, self.steplist, self.timelist, self.sample_rate, self.ampl,self.pulsefilename,self.ch)
    
     @property
     def steplist(self):
@@ -50,10 +51,9 @@ class PulseReadout(object):
     def set_steplist(self, val):
         steplist = self._steplist
         steplist[self.change_index] = val
-        print ()
-        pulse_readout(self.awg, steplist, self.timelist, self.sample_rate, self.ampl,self.pulsefilename)
+        self.ampl=(max(steplist)-min(steplist))
+        pulse_readout(self.awg, steplist, self.timelist, self.sample_rate, self.ampl,self.pulsefilename,self.ch,self.reshape)
     def get_steplist(self):
-        print('ZBRA')
         return self._steplist[self.change_index]
 
     @property
@@ -65,9 +65,8 @@ class PulseReadout(object):
     def set_timelist(self,val):
         timelist = self._timelist
         timelist[self.change_index] = val
-        pulse_readout(self.awg, self.steplist, timelist, self.sample_rate, self.ampl,self.pulsefilename)
+        pulse_readout(self.awg, self.steplist, timelist, self.sample_rate, self.ampl,self.pulsefilename,self.ch)
     def get_timelist(self):
-        print('ZBRA2')
         return self._timelist[self.change_index]
 
 class PulseRabi(object):
@@ -134,12 +133,12 @@ class PulseRabi(object):
     def get_phase(self):
         return self.phase              
 
-def create(amp, sample_rate, data,fil,ch=1):
+def create(amp, sample_rate, data,fil):
     """
     this creates the string to send to the awg for loading the waveform
     Takes in parameters : amplitude, sample_rate and data= array of int16 value
     """
-    res = """Channel Count:%s
+    res = """Channel Count:1
     Sample Rate:%s
     High Level:%s
     Low Level:%s
@@ -147,13 +146,13 @@ def create(amp, sample_rate, data,fil,ch=1):
     Filter:"%s"
     Data Points:%i
     Data:
- """%(ch,sample_rate, min(data/32767 * amp)+2*amp,  min(data/32767 * amp),fil,len(data))
+ """%(sample_rate, min(data/32767 * amp)+amp,  min(data/32767 * amp),fil,len(data))
     s = StringIO()
     np.savetxt(s, data, fmt='%i')
     res += s.getvalue()
     return res.replace('\n', '\r\n')
 
-def pulse_readout(awg1, steplist, timelist, sample_rate, ampl,filename):
+def pulse_readout(awg1, steplist, timelist, sample_rate, ampl,filename,ch,reshape=False):
     """
     This function takes  the steplist convert it in a 16bytes values of correct length
     regarding to time list. write the file and send it to awg then load the waveform
@@ -164,8 +163,14 @@ def pulse_readout(awg1, steplist, timelist, sample_rate, ampl,filename):
     sample_rate
     ampl= amplitude
     """
+    if reshape:
+        timelist = reshape_time(self.timelist,steplist)
+        print('Change timelist : {}', timelist)
+    
     total_time = sum(timelist)
     res = []
+    ampl=max(steplist)
+    print(ampl)
     for a,t in zip(steplist, timelist):
         res.append(zeros(int(t*sample_rate), dtype=int)+int(a*32767/ampl))
     res = np.concatenate(res)
@@ -175,7 +180,8 @@ def pulse_readout(awg1, steplist, timelist, sample_rate, ampl,filename):
     pulsedata = create(ampl, sample_rate, res,fil='off')
     FILE=r'int:\%s'%(filename)
     awg1.send_file(FILE, src_data=pulsedata, overwrite=True)
-    awg1.arb_load_file(FILE, clear=True)
+    awg1.arb_load_file(FILE, clear=True,ch=ch)
+    awg1.set_offset=0
 
 def pulse_rabi(awg1,freq,plateau_time,ampl,sample_rate,phase,start_time,total_time,filename,IQ=True,phaseDiff=90):
     """
@@ -230,6 +236,24 @@ def pulse_rabi(awg1,freq,plateau_time,ampl,sample_rate,phase,start_time,total_ti
         awg1.arb_load_file(FILE, clear=True)
 
     return steplist
+
+
+
+
+def reshape_time(timelist,steplist):
+    mean=sum((x*y) for x,y in zip(timelist,steplist))
+    if mean <0 :
+        i=argmax(steplist)
+        steplist_copy=np.delete(steplist,i)
+        timelist_copy=np.delete(timelist,i)
+        timelist[i]=(- (sum((x*y) for x,y in zip(timelist_copy,steplist_copy)))/steplist[i])
+    if mean >0 :
+        i=argmin(steplist)
+        steplist_copy=np.delete(steplist,i)
+        timelist_copy=np.delete(timelist,i)
+        timelist[i]=(- (sum((x*y) for x,y in zip(timelist_copy,steplist_copy)))/steplist[i])
+
+    return timelist
 
 ########################################################
 ############ DMM MIS A LA BONNE CONFIGURATION #########

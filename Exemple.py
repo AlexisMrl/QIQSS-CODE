@@ -1,4 +1,6 @@
 import sys
+
+from matplotlib.pyplot import step
 sys.path.append('C:\Users\dphy-dupontferrielab\Claude\CodePulse')
 import Pulse
 reload(Pulse)
@@ -8,21 +10,22 @@ from Pulse import *
 ######load instrument###
 ########################
 
-# awg1= instruments.agilent_rf_33522A('TCPIP0::A-33522A-00526.local::inst0::INSTR')
+#  awg1= instruments.agilent_rf_33522A('TCPIP0::A-33522A-00526.mshome.net::inst0::INSTR')
 # dm = instruments.agilent_multi_34410A('USB0::0x2A8D::0x0101::MY57515472::INSTR')
+#  rto= instruments.rs_rto_scope('tcpip::RTO2014-300206.mshome.net::inst0::instr')
 # Be Careful that impedance is on High Z on the AWG
 
 
-timelist=array([50e-6,50e-6,50e-6]) #time duration of each step
-steplist=array([0,1,0]) #voltage value of each step
-ampl=(max(steplist)) #Amplitude peak
-sample_rate=100e6
+timelist=array([10e-3,10e-3,10e-3]) #time duration of each step
+steplist=array([-0.5,0,0.5]) #voltage value of each step
+ampl=(max(steplist)-min(steplist)) #Amplitude peak
+sample_rate=1e4
 
 #reglage des settings du dmm Par defaut sample_interval=20e-6 ; Checker si la slope du trigger= POS
-dmm_settings(dm,sum(timelist), Voltage_range=0.1, sample_interval=100e-6)  
+# dmm_settings(dm,sum(timelist), Voltage_range=0.1, sample_interval=100e-6)  
 
-pulse_seq = PulseReadout(awg1, steplist, timelist, 1, ampl,sample_rate,pulsefilename='TestPulse.arb')
-sweep(pulse_seq.devtime,-.01,.01, 5, filename='test_%T.txt', out=dm.fetch_all , async=True, close_after=True)
+pulse_seq = PulseReadout(awg1, steplist, timelist, 1,ampl,sample_rate,pulsefilename='TestPulsech2.arb',ch=1)
+sweep(pulse_seq.devAmp,0,.1, 5, filename='test_%T.txt', out=rto.readval , async=True, close_after=True,beforewait=0.1)
 
 
 ###################################################
@@ -30,12 +33,13 @@ sweep(pulse_seq.devtime,-.01,.01, 5, filename='test_%T.txt', out=dm.fetch_all , 
 ####################################################  
 gate=0 # Voltage de la grille pour centrage 
 
-vd=readfile('test_*_dm_fetch_all_*.txt')
-plot(vd.T, '-o')
+vd=readfile('test_*_rto_readval_*.txt')
+for i in vd[2]:
+    plot(i, '-o')
 fig = plt.figure(figsize=[8,8])
 ax = fig.add_subplot(111)
 ax.axes.tick_params(labelsize=20)
-im = ax.imshow(vd,
+im = ax.imshow(vd[2],
     extent=(0,sum(timelist),gate+min(steplist),gate+max(steplist)),
     aspect="auto",
     origin="lower",
@@ -48,3 +52,33 @@ ax.set_ylabel('(V)', fontsize=20)
 plt.show()
 plt.tight_layout()
  
+
+
+plot()
+
+
+
+
+
+
+def Define_Array(steplist,timelist):
+    #Uniquement pour tracer
+    t=np.array([])
+    s=np.array([])
+    count=0
+    for index,i in enumerate(timelist):
+        temp=np.linspace(count,i+count,i/1e-3+1)
+        t=np.append(t,temp)
+        s_temp=[steplist[index]]*len(temp)
+        s=np.append(s,s_temp)
+        count=max(temp)
+    return s,t
+
+val=np.linspace(-0.4,0.4,4)
+for i in val:
+    timelist=array([10e-3,10e-3,10e-3])
+    steplist[1]=i
+    timelist=reshape_time(timelist,steplist)
+    s,t = Define_Array(steplist,timelist)
+    print(steplist)
+    plot(t,s,'-o')
