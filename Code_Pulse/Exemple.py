@@ -74,11 +74,12 @@ def Define_Array(steplist,timelist):
         count=max(temp)
     return s,t
 
-val=np.linspace(-0.4,0.4,4)
+val=np.linspace(-0.5,0.5,6)
 for i in val:
     timelist=array([10e-3,10e-3,10e-3])
     steplist[1]=i
     timelist=reshape_time(timelist,steplist)
+    print sum(timelist)
     s,t = Define_Array(steplist,timelist)
     print(steplist)
     plot(t,s,'-o')

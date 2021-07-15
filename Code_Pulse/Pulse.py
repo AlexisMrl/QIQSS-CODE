@@ -255,6 +255,15 @@ def reshape_time(timelist,steplist):
 
     return timelist
 
+
+def reshape_timeV2(timelist,steplist,ch):
+    mean=sum((x*y) for x,y in zip(timelist,steplist))
+    if mean !=0 :
+        i=argmax(steplist)
+        j=argmin(steplist)
+        steplist_copy=np.delete(steplist,i)
+        timelist_copy=np.delete(timelist,i)
+        timelist[i]=(- (sum((x*y) for x,y in zip(timelist_copy,steplist_copy)))/steplist[i])
 ########################################################
 ############ DMM MIS A LA BONNE CONFIGURATION #########
 #######################################################
