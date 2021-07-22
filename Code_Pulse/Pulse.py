@@ -40,7 +40,7 @@ class PulseReadout(object):
             raise ValueError('number of step not the same size as the duration time list')
         if  min(timelist) < (1.0/sample_rate):
            raise ValueError('Sample rate too low for time resolution required')
-        # pulse_readout(self.awg, self.steplist, self.timelist, self.sample_rate, self.ampl,self.pulsefilename,self.ch)
+        pulse_readout(self.awg, self.steplist, self.timelist, self.sample_rate, self.ampl,self.pulsefilename,self.ch)
    
     @property
     def steplist(self):
@@ -146,7 +146,7 @@ def create(amp, sample_rate, data,fil):
     Filter:"%s"
     Data Points:%i
     Data:
- """%(sample_rate, min(data/32767 * amp)+amp,  min(data/32767 * amp),fil,len(data))
+ """%(sample_rate, min(data/32767 * amp)+2*amp,  min(data/32767 * amp),fil,len(data))
     s = StringIO()
     np.savetxt(s, data, fmt='%i')
     res += s.getvalue()
