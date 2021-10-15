@@ -14,14 +14,16 @@ from io import StringIO
 
 class PulseReadout(object):
     """
-    this defines the pulse sequence send the AWG
+    this defines the pulse sequence send the AWG for readout pulses
     Parameter : 
     AWG instrument ; steplist of the waveform ; timelist of the waveform
     change index = index for the step that to sweep
     sample rate
     Change the steplist by steplist =  ***
+    pulsefilneame = name of the arbitrary waveform in the AWG
+    ch = output channel in the AWG
+    reshape = if True the average value of the pulse will be maintain at 0 by modifying the timelist
     The set and get defines the value of the steplist at the change index
-    Creating the pulse DOES NOT loads it automaticaly. you have to perform a set
     """
 
     def __init__(self, awg, steplist, timelist, change_index, ampl, sample_rate=100,pulsefilename='test.arb',ch=1,reshape=True):
@@ -36,6 +38,7 @@ class PulseReadout(object):
         self.reshape=reshape
         self.devAmp = instruments.FunctionWrap(self.set_steplist, self.get_steplist, basedev=self.awg, min=-self.ampl, max=self.ampl)
         self.devtime = instruments.FunctionWrap(self.set_timelist, self.get_timelist, basedev=self.awg, min=0, max=sum(timelist))
+
         if len(steplist) != len(timelist):
             raise ValueError('number of step not the same size as the duration time list')
         if  min(timelist) < (1.0/sample_rate):
@@ -68,6 +71,70 @@ class PulseReadout(object):
         pulse_readout(self.awg, self.steplist, timelist, self.sample_rate, self.ampl,self.pulsefilename,self.ch)
     def get_timelist(self):
         return self._timelist[self.change_index]
+
+class Pulse2Gate(object):
+    """
+    this defines the pulse sequence send the AWG if two pulses are sended to two different gate
+    Same as PulseReadout except parameters are arrays, by default first value will be send to channel 1, second to channel 2
+    Parameter : 
+    AWG instrument ; steplist of the waveform ; timelist of the waveform
+    change index = index for the step that to sweep
+    sample rate
+    Change the steplist by steplist =  ***
+    pulsefilneame = name of the arbitrary waveform in the AWG
+    reshape = if True the average value of the pulse will be maintain at 0 by modifying the timelist
+    The set and get defines the value of the steplist at the change index
+    """
+
+    def __init__(self, awg, steplist, timelist, change_index, ampl, sample_rate=100,pulsefilename='test.arb',reshape=True):
+        self.awg = awg
+        self.steplist = steplist
+        self.timelist = timelist
+        self.change_index = change_index
+        self.ampl = ampl
+        self.sample_rate = sample_rate
+        self.pulsefilename= pulsefilename
+        self.ch=ch
+        self.reshape=reshape
+        self.devAmp = instruments.FunctionWrap(self.set_steplist, self.get_steplist, basedev=self.awg, min=-self.ampl, max=self.ampl)
+        self.devtime = instruments.FunctionWrap(self.set_timelist, self.get_timelist, basedev=self.awg, min=0, max=sum(timelist))
+
+        if len(steplist) != len(timelist):
+            raise ValueError('number of step not the same size as the duration time list')
+        if  min(timelist) < (1.0/sample_rate):
+           raise ValueError('Sample rate too low for time resolution required')
+        pulse_readout(self.awg, self.steplist, self.timelist, self.sample_rate, self.ampl,self.pulsefilename,self.ch)
+   
+    @property
+    def steplist(self):
+        return self._steplist
+    @steplist.setter
+    def steplist(self, steplist):
+        self._steplist = array(steplist).copy()
+    def set_steplist(self, val):
+        steplist = self._steplist
+        steplist[0][self.change_index] = val[0]
+        steplist[1][self.change_index] = val[1]
+        self.ampl[0]=(max(steplist[0])-min(steplist[0]))
+        self.ampl[1]=(max(steplist[1])-min(steplist[1]))
+        pulse_readout(self.awg, steplist, self.timelist, self.sample_rate, self.ampl,self.pulsefilename,1,self.reshape)
+        pulse_readout(self.awg, steplist, self.timelist, self.sample_rate, self.ampl,self.pulsefilename,2,self.reshape)
+    def get_steplist(self):
+        return self._steplist[self.change_index]
+
+    @property
+    def timelist(self):
+        return self._timelist
+    @timelist.setter
+    def timelist(self,timelist):
+        self._timelist = array(timelist).copy()
+    def set_timelist(self,val):
+        timelist = self._timelist
+        timelist[self.change_index] = val
+        pulse_readout(self.awg, self.steplist, timelist, self.sample_rate, self.ampl,self.pulsefilename,self.ch)
+    def get_timelist(self):
+        return self._timelist[self.change_index]
+
 
 class PulseRabi(object):
     """
@@ -238,7 +305,9 @@ def pulse_rabi(awg1,freq,plateau_time,ampl,sample_rate,phase,start_time,total_ti
     return steplist
 
 
-
+########################################################
+############ Fonction Utilitaire #########
+#######################################################
 
 def reshape_time(timelist,steplist):
     mean=sum((x*y) for x,y in zip(timelist,steplist))

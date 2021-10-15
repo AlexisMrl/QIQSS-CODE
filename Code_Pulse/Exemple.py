@@ -53,12 +53,14 @@ plt.show()
 plt.tight_layout()
  
 
-
-plot()
-
-
-
-
+def epsilon_to_xy(coord, slope,x2,epsilon):
+    theta= np.arctan(slope)
+    r = np.array([[np.cos(theta),np.sin(theta),-coord[0]*np.cos(theta)-coord[1]*np.sin(theta)],
+                [-np.sin(theta),np.cos(theta),-coord[1]*np.cos(theta)+coord[0]*np.sin(theta)],
+                [0,0,1]])
+    r2=np.linalg.inv(r)
+    x,y,z=r2.dot([x2,epsilon,np.ones(len(x2))])
+    return [x,y]
 
 
 def Define_Array(steplist,timelist):
