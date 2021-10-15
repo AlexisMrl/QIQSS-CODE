@@ -1,0 +1,15 @@
+#  archives ignore list
+*.tgz
+*.zip
+*.gz
+
+#ignore pyc for python file 
+*.pyc
+#ignore hidden file
+.*
+
+#fichiers log
+*.log
+ 
+# mais pas ce fichier car utile
+!.gitignore
