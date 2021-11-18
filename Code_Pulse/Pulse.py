@@ -310,6 +310,10 @@ def pulse_rabi(awg1,freq,plateau_time,ampl,sample_rate,phase,start_time,total_ti
 #######################################################
 
 def reshape_time(timelist,steplist):
+    """
+    Cette fonction reshape la timeliste afin que la moyenne du pulse soit a 0.
+    Si le pulse est envoyé via un bias-tee cette fonction doit être appliqué.
+    """
     mean=sum((x*y) for x,y in zip(timelist,steplist))
     if mean <0 :
         i=argmax(steplist)
@@ -359,64 +363,3 @@ def dmm_settings(dm, meas_time, Voltage_range=0.1,sample_interval=20e-6):
     dm.sample_count.set(meas_time/sample_interval)
 
 
-##########################################################
-################## Sequence de pulse################################
-#########################################################
-
-# def pulseseq(awg1,steplist, timelist, Sr, ampl, awg_file='temp'):
-    
-#     """
-#     This creates the pulse sequence 
-#     awg1 = instrument name
-#     Steplist= array of value of each step in V
-#     timelist= array of time duration of each step in volt
-#     Sr= Sample rate of the AWG in Sa/s
-#     Ampl= Amplitude of the awg in V 
-#     awg_file = name of the file send to the awg = temp by default
-#     """
-    
-#     if steplist.size != timelist.size:
-#         raise ValueError('number of step not the same size as the duration time list')
-
-#     total_time= sum(timelist)
-#     sizeseq=total_time*Sr
-#     seq=array([],dtype=int16)
-#     for index, i in enumerate(steplist) : 
-        
-#         if i==0:
-#             val=0
-#         else:
-#              val=int(round(32767*i/ampl))
-#         seq=np.concatenate((seq, np.array([val]*(int(Sr*timelist[index])))))
-
-#     createFile(awg_file,ampl,Sr,seq)
-#     awg1.send_file('TEST.arb',local_src_file=awg_file,overwrite=True)
-#     awg1.arb_load_file('INT:\TEST.arb',clear=True)
-
-#     return seq
-
-
-
-# def createFile(file,Amp, Sr, seq):
-   
-#     """
-#     This creates the file that will be send to the AWG.
-#     It contains information on SR, Amplitude, and the sequene
-#     The file is overwritten every new waveform generated
-#     """
-
-#     open(file, 'w').close()
-#     f = open(file,'a+')
-#     f.write('Channel Count:1 \n')
-#     f.write('Sample Rate:'+ str(Sr)+'\n')
-#     f.write('High Level:'+ str(Amp/2)+'\n')
-#     f.write('Low Level:'+ str(-Amp/2)+'\n')
-#     f.write('Data Type:"short"\n')
-#     f.write('Filter:"off"\n')
-#     f.write('Data Points:10\n')
-#     f.write('Data:\n')
-#     for i in seq:
-#         f.write(str(i)+'\n')
-
-#     f.close()
-#     return
