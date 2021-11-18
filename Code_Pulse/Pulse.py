@@ -250,7 +250,7 @@ def pulse_readout(awg1, steplist, timelist, sample_rate, ampl,filename,ch,reshap
     awg1.arb_load_file(FILE, clear=True,ch=ch)
     awg1.set_offset=0
 
-def pulse_rabi(awg1,freq,plateau_time,ampl,sample_rate,phase,start_time,total_time,filename,IQ=True,phaseDiff=90):
+def pulse_rabi(awg1,freq,plateau_time,ampl,sample_rate,phase,start_time,total_time,filename,IQ=False,phaseDiff=90):
     """
     This generate the right timelist and steplist for a rabi pulse
     implying you use a ssb mixer
