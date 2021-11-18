@@ -189,9 +189,8 @@ def vth(data, w,T):
             i.Vthlin=(i.Ioff-b)/a
             vth50=np.append(vth50,i.Vthlin)
             plt.figure(9)
-            plt.semilogx(T1,vth50,'-o')
-            print i.vth_err, i.Vds, i.T
-            plt.errorbar(i.T,i.Vthlin, yerr=i.vth_err, capsize=4, elinewidth=1)
+            plt.semilogx(T1,vth50,'-o', color="tab:blue")
+            plt.errorbar(i.T,i.Vthlin, yerr=i.vth_err, capsize=4, elinewidth=1, color="tab:blue")
             
             i_vthlin = np.argmin(np.abs(i.Vg - i.Vthlin)) # indice
             current_vthlin = i.I[i_vthlin] # pour calculer Vth900
@@ -212,9 +211,8 @@ def vth(data, w,T):
             vth900=np.append(vth900,i.Vthlin)
             T2=np.append(T2,i.T)
             plt.figure(9)
-            plt.semilogx(T2,vth900,'-o')
-            print i.vth_err, i.Vds, i.T
-            plt.errorbar(i.T,i.Vthlin, yerr=i.vth_err, capsize=4, elinewidth=1)
+            plt.semilogx(T2,vth900,'-o', color="tab:orange")
+            plt.errorbar(i.T,i.Vthlin, yerr=i.vth_err, capsize=4, elinewidth=1, color="tab:orange")
 
     return data    
 
