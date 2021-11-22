@@ -298,22 +298,20 @@ def AnalyseComplet(lst,path,name,param,T=7,Temp_name='Temperature:',index=[2,4],
     legend=[]
     
     for index, i in enumerate(data):
-        
-        if i.Vds==0.9:            
-            plt.figure(1)
-            plt.legend(loc="best")
-            plt.semilogy(i.Vg, i.I,color=c1(int(index/2)))
-            
-            
+                    
         if i.Vds==0.05:
             legend = np.append(legend,[str(int(i.T))+'K'])
+            plt.figure(1)
+            plt.semilogy(i.Vg, i.I,color=c1(int(index/2)))
+            
+        if i.Vds==0.9:            
             plt.figure(2)
+            plt.legend(loc="best")
             plt.semilogy(i.Vg, i.I,color=c1(int(index/2)))
             
     data=Ioff(data)
     data=vth(data,wvth,T)
     data=ss(data,param,wss)
-
 
     Tick=array([1,10,100,300])
     Tticklabel=['1', '10', '100','300']
@@ -332,7 +330,7 @@ def AnalyseComplet(lst,path,name,param,T=7,Temp_name='Temperature:',index=[2,4],
     plt.show()
 
     if savepickle:
-        with open(path +'\\'+name, 'wb') as DataSave:
+        with open(path +'\\' + name + ".pickle", 'wb') as DataSave:
                pickle.dump(data, DataSave)
 
     return data
