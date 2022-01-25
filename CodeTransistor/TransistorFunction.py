@@ -24,7 +24,7 @@ class Mydata:
 		Classe de donnees pour mieux naviguer les donnees de transistor
 		Chaque courbe a comme variable de classe les differentes analyses de transistor pour faciliter
 		le traitement des donnees.
-        Cette classe a pour vocation a etre exporte via le module pickle.
+		Cette classe a pour vocation a etre exporte via le module pickle.
 	"""
 	def __init__(self):
 		self.value={}
@@ -45,13 +45,13 @@ class Mydata:
 def loadmapDC(lst,Temp_name,Vg_I_index):
 	"""
 		Load les mesures de courant.
-        create the Mydata Class and put all of them in a list
-        The function return the list of Mydata
-        assign Vds and Temperature value. 
+		create the Mydata Class and put all of them in a list
+		The function return the list of Mydata
+		assign Vds and Temperature value. 
 
-        lst: list with all file name.
-        Temp_name : Nom dans les commentaires ou est indique la temperature
-        Vg_I_index : indices of the array to retrieve VG and IDS value
+		lst: list with all file name.
+		Temp_name : Nom dans les commentaires ou est indique la temperature
+		Vg_I_index : indices of the array to retrieve VG and IDS value
 
 	"""
 
@@ -66,8 +66,8 @@ def loadmapDC(lst,Temp_name,Vg_I_index):
 			datatemp.Vg=datatemp.value[Vg_I_index[0]][0,:]
 			datatemp.I=datatemp.value[Vg_I_index[1]][0]
 		except:
-		    datatemp.Vg=datatemp.value[Vg_I_index[0]]
-		    datatemp.I=datatemp.value[Vg_I_index[1]]
+			datatemp.Vg=datatemp.value[Vg_I_index[0]]
+			datatemp.I=datatemp.value[Vg_I_index[1]]
 
 		for line in datatemp.comment:
 			match = re.search(Temp_name+"([^;]+)",line)
@@ -105,7 +105,7 @@ def Ioff(data):
 
 		index_of_maximum = np.argmax(data[0].Vg)
 		i.Ion=average(i.I[index_of_maximum-2:index_of_maximum])
-        #calcul de ioff
+		#calcul de ioff
 		if i.Vds==0.05:
 			index_of_minimum = np.argmin(abs(i.Vg))
 			try:
@@ -339,6 +339,6 @@ def AnalyseComplet(lst,path,name,param,T=2,Temp_name='Temperature:',index=[2,4],
 
 	if savepickle:
 		with open(path +'\\'+name, 'wb') as DataSave:
-	   		pickle.dump(data, DataSave)
+			pickle.dump(data, DataSave)
 
 	return data

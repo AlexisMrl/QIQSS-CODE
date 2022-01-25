@@ -1,7 +1,6 @@
 import sys
 
 from matplotlib.pyplot import step
-sys.path.append('C:\Users\dphy-dupontferrielab\Claude\CodePulse')
 import Pulse
 reload(Pulse)
 from Pulse import *
@@ -11,7 +10,7 @@ from Pulse import *
 ########################
 
 #  awg1= instruments.agilent_rf_33522A('TCPIP0::A-33522A-00526.mshome.net::inst0::INSTR')
-# dm = instruments.agilent_multi_34410A('USB0::0x2A8D::0x0101::MY57515472::INSTR')
+#  dm = instruments.agilent_multi_34410A('USB0::0x2A8D::0x0101::MY57515472::INSTR')
 #  rto= instruments.rs_rto_scope('tcpip::RTO2014-300206.mshome.net::inst0::instr')
 # Be Careful that impedance is on High Z on the AWG
 
@@ -53,35 +52,3 @@ plt.show()
 plt.tight_layout()
  
 
-def epsilon_to_xy(coord, slope,x2,epsilon):
-    theta= np.arctan(slope)
-    r = np.array([[np.cos(theta),np.sin(theta),-coord[0]*np.cos(theta)-coord[1]*np.sin(theta)],
-                [-np.sin(theta),np.cos(theta),-coord[1]*np.cos(theta)+coord[0]*np.sin(theta)],
-                [0,0,1]])
-    r2=np.linalg.inv(r)
-    x,y,z=r2.dot([x2,epsilon,np.ones(len(x2))])
-    return [x,y]
-
-
-def Define_Array(steplist,timelist):
-    #Uniquement pour tracer
-    t=np.array([])
-    s=np.array([])
-    count=0
-    for index,i in enumerate(timelist):
-        temp=np.linspace(count,i+count,i/1e-3+1)
-        t=np.append(t,temp)
-        s_temp=[steplist[index]]*len(temp)
-        s=np.append(s,s_temp)
-        count=max(temp)
-    return s,t
-
-val=np.linspace(-0.5,0.5,6)
-for i in val:
-    timelist=array([10e-3,10e-3,10e-3])
-    steplist[1]=i
-    timelist=reshape_time(timelist,steplist)
-    print sum(timelist)
-    s,t = Define_Array(steplist,timelist)
-    print(steplist)
-    plot(t,s,'-o')
