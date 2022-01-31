@@ -59,7 +59,7 @@ class PulseReadout(object):
         steplist[self.change_index] = val
         self.awg.run(enable=False)
         pulse_readout(self.awg, steplist, self.timelist, self.sample_rate,self.pulsefilename,self.ch,self.reshape,self.resample)
-        self.awg1.run(enable=True)
+        self.awg.run(enable=True)
     def get_steplist(self):
         return self._steplist
     @property
@@ -217,11 +217,12 @@ def pulse_readout(awg1, steplist, timelist, sample_rate,filename,ch,reshape=Fals
     resample : if True, send a fixed size waveform and resample after in AWG, used for timelist bigger than 10ms !
     """
     if reshape:
-        timelist = reshape_time_V2(self.timelist,steplist)
+        timelist = reshape_time_V2(timelist,steplist)
         print('Change timelist : {}', timelist)
 
     # Normalisation
     ampl=max(abs(steplist))
+    print ampl
     steplist=steplist/ampl
 
     res=[]
@@ -232,10 +233,11 @@ def pulse_readout(awg1, steplist, timelist, sample_rate,filename,ch,reshape=Fals
     for a,t in zip(steplist, timelist):
         res.append(zeros(int(t*size), dtype=int)+int(a))
     res = np.concatenate(res)
-    set(awg1.volt_ampl,ampl,ch=ch)
-    awg1.load_waveform(filename,res)
+    # awg1.volt_ampl = ampl 
+    print (res)
+    awg1.load_waveform(res,filename)
     if resample : 
-        awg1.resize(filename,sample_rate*sum(timelist))
+        awg1.resample(filename,sample_rate*sum(timelist))
     
 
 
