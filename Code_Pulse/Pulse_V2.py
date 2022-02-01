@@ -1,16 +1,3 @@
-import pyHegel
-import re
-import glob
-import sys
-import os.path
-import pylab
-from pylab import*
-from matplotlib.widgets import Slider, Button, RadioButtons
-from pyHegel import*
-from pyHegel.util import readfile
-from pyHegel.commands import sweep
-from io import StringIO
-
 '''
 Script pour la génération de pulse avec l'AWG tektro
 '''
@@ -233,9 +220,10 @@ def pulse_readout(awg1, steplist, timelist, sample_rate,filename,ch,reshape=Fals
     for a,t in zip(steplist, timelist):
         res.append(zeros(int(t*size), dtype=int)+int(a))
     res = np.concatenate(res)
-    # awg1.volt_ampl = ampl 
+    awg.volt_ampl.set(ampl, ch=ch)
+    print(ampl)
     print (res)
-    awg1.load_waveform(res,filename)
+    awg1.load_waveform(res, filename)
     if resample : 
         awg1.resample(filename,sample_rate*sum(timelist))
     
