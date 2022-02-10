@@ -1,5 +1,5 @@
 '''
-Script pour la génération de pulse avec l'AWG tektro
+Script pour la generation de pulse avec l'AWG tektro
 '''
 
 class PulseReadout(object):
@@ -8,7 +8,7 @@ class PulseReadout(object):
     Parameter : 
     AWG instrument ; steplist of the waveform ; timelist of the waveform
     change index = index for the step that to sweep
-    sample rate
+    sample rate = sample_rate is automatically corrected so that the total waveform is a  multiple of 64
     Change the steplist by steplist =  ***
     pulsefilneame = name of the arbitrary waveform in the AWG
     ch = output channel in the AWG
@@ -28,14 +28,25 @@ class PulseReadout(object):
         self.pulsefilename= pulsefilename
         self.ch=ch
         self.reshape=reshape
-        self.resample=resample
         self.devAmp = instruments.FunctionWrap(self.set_steplist, self.get_steplist, basedev=self.awg)
         self.devtime = instruments.FunctionWrap(self.set_timelist, self.get_timelist, basedev=self.awg, min=0, max=sum(timelist))
-        pulse_readout(self.awg, self.steplist, self.timelist, self.sample_rate,self.pulsefilename,self.ch,self.reshape)
-        self.awg.channel_waveform.set(self.pulsefilename,ch=self.ch)
+ 
         if len(steplist) != len(timelist):
             raise ValueError('number of step not the same size as the duration time list')
-   
+        if  min(timelist) < (1.0/sample_rate):
+           raise ValueError('Sample rate too low for time resolution required')     
+
+         # New timelist for sample = *64
+        N=round(64*ceil(self.sample_rate*sum(self.timelist)/64)-self.sample_rate*sum(self.timelist))
+        self.timelist[-1]= self.timelist[-1]+N/sample_rate
+        print('new timelist is {}'.format(self.timelist))
+
+        # Initialise le sample rate, create waveform, load it to channel
+        self.awg.sample_rate.set(self.sample_rate)
+        pulse_readout(self.awg, self.steplist, self.timelist, self.sample_rate,self.pulsefilename,self.ch,self.reshape)
+        self.awg.list_waveforms.get()
+        self.awg.channel_waveform.set(self.pulsefilename,ch=self.ch)
+
     @property
     def steplist(self):
         return self._steplist
@@ -45,9 +56,9 @@ class PulseReadout(object):
     def set_steplist(self, val):
         steplist = self._steplist
         steplist[self.change_index] = val
-        self.awg.run(enable=False)
         pulse_readout(self.awg, steplist, self.timelist, self.sample_rate,self.pulsefilename,self.ch,self.reshape)
-        self.awg.run(enable=True)
+        self.awg.wait_for_trig()
+
     def get_steplist(self):
         return self._steplist
     @property
@@ -206,20 +217,25 @@ def pulse_readout(awg1, steplist, timelist, sample_rate,filename,ch,reshape=Fals
     reshape  : if bias-tee used, average waveform at 0 by changing steplist 
     resample : if True, send a fixed size waveform and resample after in AWG, used for timelist bigger than 10ms !
     """
+    # Normalisation
+    ampl=2*(max(abs(steplist)))
+    steplist=(steplist/ampl)
+    res=[]
+
+    # Reshape timeliste if bias-tee used
     if reshape:
         timelist = reshape_time_V2(timelist,steplist)
         print('Change timelist : {}', timelist)
 
-    # Normalisation
-    ampl=(max(abs(steplist)))
-    steplist=(steplist/ampl)
-    res=[]
+
     for a,t in zip(steplist, timelist):
         res.append(zeros(int(t*sample_rate), dtype=int)+float(a))
     res = np.concatenate(res)
     awg1.volt_ampl.set(ampl, ch=ch)
-    awg1.waveform_create(res, filename,sample_rate=sample_rate)
-    
+    if filename in get(awg.list_waveforms):
+        awg1.waveform_data.set(res, wfname=filename)
+    else:
+        awg1.waveform_create(res,filename,marker=(0,-1))
 
 
 def pulse_rabi(awg1,freq,plateau_time,ampl,sample_rate,phase,start_time,total_time,filename,IQ=False,phaseDiff=90):
