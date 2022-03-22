@@ -201,9 +201,7 @@ def vth(data, w,T):
 			T1=np.append(T1,i.T)
 			i.Vthlin=(i.Ioff-courbefit2[0][0])/courbefit2[0][1]
 			vth50=np.append(vth50,i.Vthlin)
-			plt.figure(9)
-			semilogx(T1,vth50,'-o')
-			current=ioffset[rep]
+
 
 
 		if i.Vds==0.9:
@@ -214,9 +212,13 @@ def vth(data, w,T):
 			i.Vthlin=i.Vg[np.argmin(abs(i.I-current))]
 			vth900=np.append(vth900,i.Vthlin)
 			T2=np.append(T2,i.T)
-			plt.figure(9)
-			semilogx(T2,vth900,'-o')
-
+			
+			
+	
+	plt.figure(9)
+	semilogx(T1,vth50,'-o')
+	current=ioffset[rep]
+	semilogx(T2,vth900,'-o')
 	return data	
 
 
