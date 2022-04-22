@@ -17,28 +17,26 @@ rto = instruments.rs_rto_scope('USB0::0x0AAD::0x0197::1329.7002k14-300206::INSTR
 timelist=array([100e-6,100e-6,100e-6]) #time duration of each step
 steplist=array([-0.5,0,0.5]) #voltage value of each step
 sample_rate=10e6
-
+awg.waveform_delete('Test')
 pulse_seq = PulseReadout(awg, steplist, timelist, 1,sample_rate,pulsefilename='Test',ch=1,reshape=False)
 
 
 
 
-%time sweep(pulse_seq.devAmp,-0.50,..5, 5, filename='test_basic_%T.txt', out=rto.fetch, async=True, close_after=True,beforewait=0.1)
-
-
+# %time sweep(pulse_seq.devAmp,-0.50,.5, 5, filename='test_basic_%T.txt', out=rto.fetch, async=True, close_after=True,beforewait=0.1)
 ###################################################
 ################Trace du graph ####################
 ####################################################  
 """
 gate=0 # Voltage de la grille pour centrage 
 
-vd=readfile(r'C:\\Projets\Composant\TestAWG_TEKTRO\\20220208\test_trig_2_*_rto_fetch_*.txt')
+vd=readfile(r'C:\Projets\Composant\TestAWG_TEKTRO\20220210\test_gated_long_*_rto_fetch_*.txt')
 for i in vd[1]:
-    plot(i, '-o')
+    plot(vd[0,0],i, '-o')
 fig = plt.figure(figsize=[8,8])
 ax = fig.add_subplot(111)
 ax.axes.tick_params(labelsize=20)
-im = ax.imshow(vd[2],
+im = ax.imshow(vd[1],
     extent=(0,sum(timelist),gate+min(steplist),gate+max(steplist)),
     aspect="auto",
     origin="lower",

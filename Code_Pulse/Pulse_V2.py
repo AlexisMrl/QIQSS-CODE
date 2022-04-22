@@ -37,7 +37,7 @@ class PulseReadout(object):
            raise ValueError('Sample rate too low for time resolution required')     
 
          # New timelist for sample = *64
-        N=round(64*ceil(self.sample_rate*sum(self.timelist)/64)-self.sample_rate*sum(self.timelist))
+        N=round(256*ceil(self.sample_rate*sum(self.timelist)/256)-self.sample_rate*sum(self.timelist))
         self.timelist[-1]= self.timelist[-1]+N/sample_rate
         print('new timelist is {}'.format(self.timelist))
 
@@ -219,7 +219,7 @@ def pulse_readout(awg1, steplist, timelist, sample_rate,filename,ch,reshape=Fals
     """
     # Normalisation
     ampl=2*(max(abs(steplist)))
-    steplist=(steplist/ampl)
+    steplist=(steplist/(ampl/2))
     res=[]
 
     # Reshape timeliste if bias-tee used
