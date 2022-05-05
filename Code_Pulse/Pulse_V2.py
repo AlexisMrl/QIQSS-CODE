@@ -19,7 +19,7 @@ class PulseReadout(object):
     devTime = device a sweep pour modifier le temps du pulse
     """
 
-    def __init__(self, awg, steplist, timelist, change_index, sample_rate=2.5e9,pulsefilename='test',ch=1,reshape=True):
+    def __init__(self, awg, steplist, timelist, change_index=1, sample_rate=2.5e9,pulsefilename='test',ch=1,reshape=True):
         self.awg = awg
         self.steplist = steplist
         self.timelist = timelist
@@ -37,7 +37,7 @@ class PulseReadout(object):
            raise ValueError('Sample rate too low for time resolution required')     
 
          # New timelist for sample = *64
-        N=round(256*ceil(self.sample_rate*sum(self.timelist)/256)-self.sample_rate*sum(self.timelist))
+        N=round(64*ceil(self.sample_rate*sum(self.timelist)/64)-self.sample_rate*sum(self.timelist))
         self.timelist[-1]= self.timelist[-1]+N/sample_rate
         print('new timelist is {}'.format(self.timelist))
 
@@ -304,5 +304,4 @@ def reshape_timeV2(timelist,steplist):
         T=sum(timelist)
         timelist[2]=(-steplist[0]*T+timelist[1]*(steplist[0]-steplist[1]))/(steplist[2]-steplist[0])
         timelist[0]=T-(timelist[1]+timelist[2])
-        print timelist
     return timelist    
