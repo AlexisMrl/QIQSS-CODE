@@ -20,7 +20,7 @@ awg = instruments.tektronix_AWG('TCPIP0::AWG5200-9841.mshome.net::inst0::INSTR')
 rto = instruments.rs_rto_scope('USB0::0x0AAD::0x0197::1329.7002k14-300206::INSTR')
 ```
 
-# Define a readout pulse
+### Define a readout pulse
 ```
 timelist=array([100e-6,100e-6,100e-6]) #time duration of each step
 steplist=array([-0.05,0,0.05]) #voltage value of each step
@@ -31,9 +31,19 @@ pulse_seq = PulseReadout(awg, steplist, timelist, change_index=1, sample_rate=2.
 > An important parameter is change_index, it is the index of the steplist that will be affected by the sweep function.
 > By default the second step value (read level) is selected
 
-> A new timelist
+> A new timelist is generated modifying the last step to have a x64 number of sample on the awg (weird bug)
 
-# lauching a readout sequence
+### previz your pulses
+Send all the sent pulse as a list, will plot them on a graph for vizualisation
+```
+futil.plot_pulse_seq([pulse_seq])
+```
+
+### lauching a readout sequence
+will sweep the read level.
+If you want statistical data at 1 read level, just enter equal start and stop value
+```
+sweep(pulse_seq.devAmp,-0.050,.05, 5, filename='test_basic_%T.txt', out=rto.fetch, async=True, close_after=True,beforewait=0.1)
+```
 
 
-# plotting out your pulses
