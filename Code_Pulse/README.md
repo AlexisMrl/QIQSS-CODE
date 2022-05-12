@@ -9,7 +9,7 @@ Pulse Rabi : Pulse a utilisé avec une source micro-onde : Génère des fonction
 Exemple.py regroup diffferent usage example.
 Le fichier codeLabber est un copy paste du code utiliser par Labber pour la même utilisation
 
-> For now this code is design to operate with Tektrnoix awg 5008
+> For now this code is design to operate with Tektronix awg 5008
 
 
 ## How to Use
@@ -34,7 +34,7 @@ pulse_seq = PulseReadout(awg, steplist, timelist, change_index=1, sample_rate=2.
 > A new timelist is generated modifying the last step to have a x64 number of sample on the awg (weird bug)
 
 ### previz your pulses
-Send all the sent pulse as a list, will plot them on a graph for vizualisation
+Send all pulses as a list, will plot them on a graph for vizualisation.
 ```
 futil.plot_pulse_seq([pulse_seq])
 ```
@@ -46,4 +46,12 @@ If you want statistical data at 1 read level, just enter equal start and stop va
 sweep(pulse_seq.devAmp,-0.050,.05, 5, filename='test_basic_%T.txt', out=rto.fetch, async=True, close_after=True,beforewait=0.1)
 ```
 
+### single segmented pulse
+
+This command is used to gain time, it send one big waveform containing all the different pulse (or iterations of the same pulse).
+To acquire data, use oscilloscope (or later Alazartech) in segmented mode. On rs_rto scope be carefull to add 10us of extra time at the last steplist corresponding to the acquisition delay.
+This command generate the new steplist, timelist, and marker to create the pulse sequence. take as parameter the timelist, the steplist, the start,stop and number of point to iterate.
+```
+s,t,m=Single_Pulse_frag(timelist,steplist,-0.05,0.05,100)
+```
 
