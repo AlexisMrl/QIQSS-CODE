@@ -1,9 +1,8 @@
 # import sys
 
-# from matplotlib.pyplot import step
-# import Pulse_V2
-# reload(Pulse)
-# from Pulse import *
+import Pulse_V2
+from Pulse_V2 import *
+import function_util as futil
 
 ########################
 ######load instrument###
@@ -13,43 +12,29 @@
 # rto = instruments.rs_rto_scope('USB0::0x0AAD::0x0197::1329.7002k14-300206::INSTR')
 # Be Careful that impedance is on High Z on the AWG
 
+# code line to delete a waveform in the awg
+awg.waveform_delete('Test') 
 
+
+
+#############################
+###Create readout Pulse   ###
+#############################
 timelist=array([100e-6,100e-6,100e-6]) #time duration of each step
 steplist=array([-0.05,0,0.05]) #voltage value of each step
 sample_rate=320e6
-awg.waveform_delete('Test')
+
 pulse_seq = PulseReadout(awg, steplist, timelist,sample_rate=sample_rate,pulsefilename='Test',ch=1,reshape=False)
 
+#############################
+###    Plotting Pulses  ###
+#############################
+futil.plot_pulse_seq([pulse_seq])
+
+# %time sweep(pulse_seq.devAmp,-0.050,.05, 5, filename='test_basic_%T.txt', out=rto.fetch, async=True, close_after=True,beforewait=0.1)
 
 
-
-def Single_Pulse_frag(timelist,steplist,start,stop,npts,sample_rate=320e6):
-    """ This function generate an array of readout pulse with different read level for segmentation
-    measurement on the oscilloscope
-    start, stop and npt are the sweep parameters of the read level. 
-    Return, new steplist, timelist, and necessary markers """
-
-    sweep_value= np.linspace(start,stop,npts)
-    steplist_copy=steplist
-    new_steplist, new_timelist=np.array([]),np.array([])
-    res,marker=[],[]
-    t=sum(timelist)
-    for i in sweep_value:
-        steplist_copy[1]=i
-        new_steplist=np.append(new_steplist,steplist_copy)
-        new_timelist=np.append(new_timelist,timelist)
-        marker= marker+int(t*sample_rate)/2*[1]+int(t*sample_rate)/2*[0]
-    
-    for a,t in zip(new_steplist, new_timelist):
-        res.append(zeros(int(t*1e3), dtype=int)+float(a))
-
-    res = np.concatenate(res)
-    wavstr = np.array([i<<7 for i in marker], dtype=np.uint8)
-    # plot(res)
-
-    return new_steplist,new_timelist,wavstr
-
-def test_run(awg,rto):
+def test_run_frag(awg,rto):
     s,t,m=Single_Pulse_frag(timelist,steplist,-0.05,0.05,100)
     pulse_seq = PulseReadout(awg, s, t,sample_rate=320e6,pulsefilename='Test',ch=1,reshape=False)
     awg.waveform_marker_data.set(m,wfname='Test')
@@ -82,6 +67,4 @@ cbar.ax.tick_params(labelsize=20)
 ax.set_xlabel('Time (s)', fontsize=20)
 ax.set_ylabel('(V)', fontsize=20)
 plt.show()
-plt.tight_layout()
- 
 """
