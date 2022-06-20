@@ -440,7 +440,8 @@ class MyMainWindow(baseclass, formclass):
         self.ax1f1.tick_params('both', which='both', direction='out')
         self.ax1f1.ticklabel_format(scilimits = (-2,3))
         self.ax1f1.ticklabel_format(useMathText=True)
-
+        self.ax1f1.tick_params(axis='x', labelsize='x-large')
+        self.ax1f1.tick_params(axis='y', labelsize='x-large')
         if self.twoDims:
             self.reshape2Ddata()  #Reshape the data if it contains 2D array
             zIndex = int(self.set_display_2.currentIndex())
@@ -581,8 +582,8 @@ class MyMainWindow(baseclass, formclass):
         #names x and y and min and max for each axis
         xName = str(self.cb_src1.currentText())
         yName = str(self.cb_src2.currentText())
-        self.ax1f1.set_xlabel(xName)
-        self.ax1f1.set_ylabel(yName)
+        self.ax1f1.set_xlabel(xName,fontsize='large')
+        self.ax1f1.set_ylabel(yName,fontsize='large')
         self.setAxisIndexes()
         self.UpdateData()
     
