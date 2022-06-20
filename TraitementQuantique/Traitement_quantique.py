@@ -312,7 +312,7 @@ class MyMainWindow(baseclass, formclass):
         """
         Add name of new instrument here:
         """
-        instruments = ['lockin', 'Lockin', 'zurich', 'Zurich', 'zi']
+        instruments = ['lockin', 'lockin_2','Lockin', 'zurich', 'Zurich', 'zi']
         for h in instruments: self.add_Mag_Phase(h)
         
         #Setting x and y possible titles for axis
