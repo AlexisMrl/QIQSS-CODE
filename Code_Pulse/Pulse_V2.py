@@ -175,8 +175,8 @@ def pulse_readout(awg1, steplist, timelist, sample_rate,filename,ch,reshape=Fals
     resample : if True, send a fixed size waveform and resample after in AWG, used for timelist bigger than 10ms !
     """
     # Normalisation
-    ampl=4*(max(abs(steplist)))
-    steplist=(steplist/(ampl/2))
+    ampl=(max(abs(steplist)))
+    steplist=(steplist/(ampl))
     res=[]
 
     # Reshape timeliste if bias-tee used
