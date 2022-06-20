@@ -10,6 +10,7 @@
 
 import os
 import sys
+import re
 #import time
 import traceback
 #import logging
@@ -311,7 +312,7 @@ class MyMainWindow(baseclass, formclass):
         """
         Add name of new instrument here:
         """
-        instruments = ['lockin', 'Lockin', 'zurich', 'Zurich', 'zi']
+        instruments = ['lockin', 'lockin_2','Lockin', 'zurich', 'Zurich', 'zi']
         for h in instruments: self.add_Mag_Phase(h)
         
         #Setting x and y possible titles for axis
@@ -600,6 +601,8 @@ class MyMainWindow(baseclass, formclass):
         #find min and max
         if np.isnan(self.xmin): 
             self.xmax, self.xmin = self.findExtremum(xVariable)
+            self.xmax= self.xmin+(self.data[xIndex][1,0]-self.data[xIndex][0,0])*len(self.data[xIndex][:,0])
+
         if np.isnan(self.ymin):
             self.ymax, self.ymin = self.findExtremum(yVariable)
         

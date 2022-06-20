@@ -1,3 +1,9 @@
+# Author - Claude Rohrbacher <claude.rohrb@gmail.com> 2019
+# This code is to be used for processing transistor data, extract ioff, ion ,vth and ss data at different temperature.
+# Be aware that this code was written at the begining of my PhD thesis with pure chaotic energy.
+# The comments are rare and the variable not well named.
+# You've been warned
+
 import re
 import glob
 import sys
@@ -17,8 +23,6 @@ import GraphStyle
 from GraphStyle import*
 import pickle
 
-
-
 class Mydata:
 	"""
 		Classe de donnees pour mieux naviguer les donnees de transistor
@@ -35,6 +39,7 @@ class Mydata:
 		self.Ioff=0
 		self.Ion=0
 		self.Vthlin=0;
+		self.vth_err = 0
 		self.ss=0
 		self.ssi=0
 		self.offset=0
@@ -82,8 +87,9 @@ def loadmapDC(lst,Temp_name,Vg_I_index):
 
 				
 		data.append(datatemp)
-		
-	data=sorted(data, key=lambda Mydata: Mydata.T)	
+	# tri selon les temperatures pour que les courbes soient belles,
+	# et selon Vds pour que Vth-lin soit deja calcule qund on calcule Vth-sat
+	data.sort(key = lambda x: (x.T, x.Vds))
 	
 	return data
 
@@ -174,7 +180,7 @@ def vth(data, w,T):
 	T1= np.empty((0,0), float)
 	vth900= np.empty((0,0), float)
 	T2= np.empty((0,0), float)
-	current=0;
+	current_vthlin=None;
 	for index, i in enumerate(data):
 
 		if i.Vds==0.05:
@@ -183,24 +189,35 @@ def vth(data, w,T):
 			derivative=der.Dfilter(i.Vg,i.I-(i.offset),10)
 			plot(derivative[0],derivative[1],'--',color=c1(int(index/2)))
 
- #TEST LINEAR FIT ON THE NORMAL CURVE
+			#TEST LINEAR FIT ON THE NORMAL CURVE
 			plt.figure(7)
 			rep=np.argmax(derivative[1])
 			p0=[-0.00091647 , 0.00113323]
 			ioffset=i.I-(i.offset)
-			courbefit2=fit.fitcurve(fitFCT.linear,i.Vg[rep-w:rep+w],ioffset[rep-w:rep+w],p0)
+			(b, a), _, (db, da), _ = fit.fitcurve(fitFCT.linear,i.Vg[rep-w:rep+w],ioffset[rep-w:rep+w],p0)
 
-			x=i.value[2][0][rep-w:rep+w]
-			y=x*courbefit2[0][1]+courbefit2[0][0]
+			x=i.Vg[rep-w:rep+w]
+			y = a * x + b
+			# calcul de l'erreur d_vth = 1/a * db + b/a^2 * da
+			i.vth_err = 1/a * db + b / (a**2) * da
+			
 			plt.figure(8)
-			plot(i.value[2][0], ioffset,'--',color=c1(int(index/2)))
+			plot(i.Vg, ioffset,'--',color=c1(int(index/2)))
 	
 			plot(x,y,'-',color=c1(int(index/2)))
 			plot([min(x), max(x)],[min(y), max(y)],'o',color=c1(int(index/2)))
-			plot(i.value[2][0][rep],ioffset[rep], 'o',color=c1(int(index/2)))
+			plot(i.Vg[rep],ioffset[rep], 'o',color=c1(int(index/2)))
 			T1=np.append(T1,i.T)
-			i.Vthlin=(i.Ioff-courbefit2[0][0])/courbefit2[0][1]
+			i.Vthlin=(i.Ioff-b)/a
 			vth50=np.append(vth50,i.Vthlin)
+			plt.figure(9)
+			plt.semilogx(T1,vth50,'-o', color="tab:blue")
+			plt.errorbar(i.T,i.Vthlin, yerr=i.vth_err, capsize=4, elinewidth=1, color="tab:blue")
+			
+			i_vthlin = np.argmin(np.abs(i.Vg - i.Vthlin)) # indice
+			current_vthlin = i.I[i_vthlin] # pour calculer Vth900
+			dcurrent_vthlin = np.average(derivative[1][i_vthlin - 5 : i_vthlin + 5])
+			linerr = i.vth_err
 
 
 
@@ -209,16 +226,19 @@ def vth(data, w,T):
 			"""
 			Value of Vg for which Id is equal to the current at the threshold voltage extracted in linear regime 
 			"""
-			i.Vthlin=i.Vg[np.argmin(abs(i.I-current))]
+			i_vthlin = np.argmin(abs(i.I-current_vthlin))
+			i.Vthlin=i.Vg[i_vthlin]
+			derivative=der.Dfilter(i.Vg,i.I-(i.offset),10)
+			dv_vthlin = 1 / np.average(derivative[1][i_vthlin - 5 : i_vthlin + 5])
+			i.vth_err = dv_vthlin * dcurrent_vthlin * linerr
 			vth900=np.append(vth900,i.Vthlin)
 			T2=np.append(T2,i.T)
 			
 			
 	
-	plt.figure(9)
-	semilogx(T1,vth50,'-o')
-	current=ioffset[rep]
-	semilogx(T2,vth900,'-o')
+			plt.figure(9)
+			plt.semilogx(T2,vth900,'-o', color="tab:orange")
+			plt.errorbar(i.T,i.Vthlin, yerr=i.vth_err, capsize=4, elinewidth=1, color="tab:orange")
 	return data	
 
 
