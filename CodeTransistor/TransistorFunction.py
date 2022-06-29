@@ -41,8 +41,8 @@ class Mydata:
 		self.Vthlin=0;
 		self.vth_err = 0
 		self.ss=0
-		self.ssi=0
-		self.offset=0
+		self.ssi=0 #current at which the ss is extracted
+		self.offset=0 #if offset is present, usually not use
 		self.Iofferror=0
 		self.Vg=np.array([])
 		self.I=np.array([])
@@ -308,59 +308,54 @@ def ss(data,param,w=40):
 	return data
 
 
-def AnalyseComplet(lst,path,name,param,T=2,Temp_name='Temperature:',index=[2,4],wss=40,wvth=50,savepickle=False,savegraph=False):
-	""" Call all function to calculate SS, Vth, Ioff, Ion 
-		lst: list of filename data
-		path=path to save figures and pickle
-		name=name of pickle file
-		T= number of expected temperature
-		wss = width of fit for ss
-		wvth: width of fit for Vth
-		param : parameter for SS calculation : [minVds50,MaxVds50,ValueVds50,minVds900,minVds900,ValueVds900]"""
+def AnalyseComplet(lst,path,name,param,T=7,Temp_name='Temperature:',Vg_I=[2,4],wss=40,wvth=50,savepickle=False,savegraph=False):
+    """ Call all function to calculate SS, Vth, Ioff, Ion 
+        lst: list of filename data
+        path=path to save figures and pickle
+        name=name of pickle file
+        T= number of expected temperature
+        wss = width of fit for ss
+        wvth: width of fit for Vth
+        param : parameter for SS calculation : [minVds50,MaxVds50,ValueVds50,minVds900,minVds900,ValueVds900]"""
+    data = loadmapDC(lst,Temp_name,Vg_I)
+    # Offset= loadmapDC(Offset)
+    c1 = cm.get_cmap('coolwarm', T)
+    legend=[]
+    
+    for index, i in enumerate(data):
+                    
+        if i.Vds==0.05:
+            legend = np.append(legend,[str(int(i.T))+'K'])
+            plt.figure(1)
+            plt.semilogy(i.Vg, i.I,color=c1(int(index/2)))
+            
+        if i.Vds==0.9:            
+            plt.figure(2)
+            plt.legend(loc="best")
+            plt.semilogy(i.Vg, i.I,color=c1(int(index/2)))
+            
+    data=Ioff(data)
+    data=vth(data,wvth,T)
+    data=ss(data,param,wss)
 
+    Tick=array([1,10,100,300])
+    Tticklabel=['1', '10', '100','300']
+    VgTick=array([-0.5,0,0.5,1,1.2])
+    VgTickLabel=['-0.5','0','0.5','1','1.2']
+    graph(figure(1),path,'I-V lin'+name, '$V_G$ (V)', '$I_{DS}$ (A)', '$V_{DS}$ = 0.05 V', legend,col=1,save=savegraph)
+    graph(figure(2),path,'I-V sat'+name, '$V_G$ (V)', '$I_{DS}$ (A)', '$V_{DS}$ = 0.9 V', legend, col=1,save=savegraph)
+    graph(figure(4),path,'IOFF'+name, 'Temperature (K)', '$I_{OFF}$ (A)', '', ['$V_{DS}$ = 50 mV','$V_{DS}$ = 900 mV'], xtick=Tick, xticklabel=Tticklabel,save=savegraph)
+    graph(figure(5),path,'ION'+name, 'Temperature (K)', '$I_{ON}$ (A)', '', ['$V_{DS}$ = 50 mV','$V_{DS}$ = 900 mV'], xtick=Tick, xticklabel=Tticklabel,save=savegraph)
+    graph(figure(6),path,'ION-IOFF'+name, 'Temperature (K)', '$ \\dfrac{I_{ON}}{I_{OFF}}$', '', ['$V_{DS}$ = 50 mV','$V_{DS}$ = 900 mV'], xtick=Tick, xticklabel=Tticklabel,save=savegraph)
+    graph(figure(9),path,'NewVth'+name, 'Temperature (K)', '$V_{TH} (V)$', '', ['$V_{DS}$ = 50 mV','$V_{DS}$ = 900 mV'], xtick=Tick, xticklabel=Tticklabel,save=savegraph)
+    graph(figure(13),path,'SSlin'+name, 'Current (A)', '$SS $(mV/decade)', 'Linear regime $V_{DS}$ = 50 mV ',save=savegraph)
+    graph(figure(15),path,'SSsat'+name, 'Current (A)', '$SS $(mV/decade)', 'Saturations regime $V_{DS}$ = 900 mV ',save=savegraph)
+    graph(figure(16),path,'SS'+name, 'Temperature (K)', '$SS (mV/decade)$', '', ['$V_{DS}$ = 50 mV','$V_{DS}$ = 0.9 V'], xtick=Tick, xticklabel=Tticklabel,save=savegraph)
+    graph(figure(13),path,'SSlin'+name, 'Current (A)', '$SS $(mV/decade)', 'Linear regime $V_{DS}$ = 50 mV ',save=savegraph)
+    plt.show()
 
-	data = loadmapDC(lst,Temp_name,index)
-	# Offset= loadmapDC(Offset)
+    if savepickle:
+        with open(path +'\\' + name + ".pickle", 'wb') as DataSave:
+               pickle.dump(data, DataSave)
 
-	
-	c1 = cm.get_cmap('coolwarm', T)
-	legend=[]
-	
-	for index, i in enumerate(data):
-		
-		if i.Vds==0.9:			
-			plt.figure(1)
-			plt.semilogy(i.Vg, i.I,color=c1(int(index/2)))
-			
-			
-		if i.Vds==0.05:
-			legend = np.append(legend,[str(i.T)+'K'])
-			plt.figure(2)
-			plt.semilogy(i.Vg, i.I,color=c1(int(index/2)))
-			
-	data=Ioff(data)
-	data=vth(data,wvth,T)
-	data=ss(data,param,wss)
-
-
-	Tick=array([1,10,100,300])
-	Tticklabel=['1', '10', '100','300']
-	VgTick=array([-0.5,0,0.5,1,1.2])
-	VgTickLabel=['-0.5','0','0.5','1','1.2']
-	graph(figure(1),path,'I-V sat'+name, '$V_G$ (V)', '$I_{DS}$ (A)', '$V_{DS}$ = 0.9 V', legend, col=2,save=savegraph)
-	graph(figure(2),path,'I-V lin'+name, '$V_G$ (V)', '$I_{DS}$ (A)', '$V_{DS}$ = 0.05 V', legend,col=2,save=savegraph)
-	graph(figure(4),path,'IOFF'+name, 'Temperature (K)', '$I_{OFF}$ (A)', '', ['$V_{DS}$ = 50 mV','$V_{DS}$ = 900 mV'], xtick=Tick, xticklabel=Tticklabel,save=savegraph)
-	graph(figure(5),path,'ION'+name, 'Temperature (K)', '$I_{ON}$ (A)', '', ['$V_{DS}$ = 50 mV','$V_{DS}$ = 900 mV'], xtick=Tick, xticklabel=Tticklabel,save=savegraph)
-	graph(figure(6),path,'ION-IOFF'+name, 'Temperature (K)', '$ \\dfrac{I_{ON}}{I_{OFF}}$', '', ['$V_{DS}$ = 50 mV','$V_{DS}$ = 900 mV'], xtick=Tick, xticklabel=Tticklabel,save=savegraph)
-	graph(figure(9),path,'NewVth'+name, 'Temperature (K)', '$V_{TH} (V)$', '', ['$V_{DS}$ = 50 mV','$V_{DS}$ = 900 mV'], xtick=Tick, xticklabel=Tticklabel,save=savegraph)
-	graph(figure(13),path,'SSlin'+name, 'Current (A)', '$SS $(mV/decade)', 'Linear regime $V_{DS}$ = 50 mV ',save=savegraph)
-	graph(figure(15),path,'SSsat'+name, 'Current (A)', '$SS $(mV/decade)', 'Saturations regime $V_{DS}$ = 900 mV ',save=savegraph)
-	graph(figure(16),path,'SS'+name, 'Temperature (K)', '$SS (mV/decade)$', '', ['$V_{DS}$ = 50 mV','$V_{DS}$ = 0.9 V'], xtick=Tick, xticklabel=Tticklabel,save=savegraph)
-	graph(figure(13),path,'SSlin'+name, 'Current (A)', '$SS $(mV/decade)', 'Linear regime $V_{DS}$ = 50 mV ',save=savegraph)
-	plt.show()
-
-	if savepickle:
-		with open(path +'\\'+name, 'wb') as DataSave:
-			pickle.dump(data, DataSave)
-
-	return data
+    return data
