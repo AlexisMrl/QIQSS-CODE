@@ -7,7 +7,7 @@
 # This file is part of Code Pulse
 #                                                                            #       
 ##############################################################################
-
+import numpy as np
 
 class PulseReadout(object):
     """
@@ -21,13 +21,12 @@ class PulseReadout(object):
     Change the steplist by steplist =  ***
     pulsefilneame = name of the arbitrary waveform in the AWG
     ch = output channel in the AWG
-    reshape = if True the average value of the pulse will be maintain at 0 by modifying the timelist
     trig = this pulse pulse generates the trigger. 
     devAmp = device a sweep pour modifier l'amplitude du pulse
     devTime = device a sweep pour modifier le temps du pulse
     """
 
-    def __init__(self, awg, steplist, timelist, change_index=1, sample_rate=2.5e9,pulsefilename='test',ch=1,trig=True,reshape=False):
+    def __init__(self, awg, steplist, timelist, change_index=1, sample_rate=2.5e9,pulsefilename='test',ch=1,trig=True,gain=1):
         self.awg = awg
         self.steplist = steplist
         self.timelist = timelist
@@ -36,11 +35,11 @@ class PulseReadout(object):
         self.pulsefilename= pulsefilename
         self.ch=ch
         self.trig=trig
-        self.reshape=reshape
 
         self.devAmp = instruments.FunctionWrap(self.set_steplist, self.get_steplist, basedev=self.awg)
         self.devtime = instruments.FunctionWrap(self.set_timelist, self.get_timelist, basedev=self.awg, min=0, max=sum(timelist))
         self.type= 'Readout Pulse'
+        self.gain=gain
 
         if len(steplist) != len(timelist):
             raise ValueError('number of step not the same size as the duration time list')
@@ -57,7 +56,7 @@ class PulseReadout(object):
             print('Carefull no awg is selected, set and get function won t  work')
         else:
             self.awg.sample_rate.set(self.sample_rate)
-            pulse_readout(self.awg, self.steplist, self.timelist, self.sample_rate,self.pulsefilename,self.ch,self.reshape)
+            pulse_readout(self.awg, self.steplist, self.timelist, self.sample_rate,self.pulsefilename,self.ch,self.gain)
             self.awg.list_waveforms.get()
             self.awg.channel_waveform.set(self.pulsefilename,ch=self.ch)
 
@@ -66,11 +65,11 @@ class PulseReadout(object):
         return self._steplist
     @steplist.setter
     def steplist(self, steplist):
-        self._steplist = array(steplist).copy()
+        self._steplist = np.array(steplist).copy()
     def set_steplist(self, val):
         steplist = self._steplist
         steplist[self.change_index] = val
-        pulse_readout(self.awg, steplist, self.timelist, self.sample_rate,self.pulsefilename,self.ch,self.reshape)
+        pulse_readout(self.awg, steplist, self.timelist, self.sample_rate,self.pulsefilename,self.ch,self.gain)
         if self.trig==True:
             self.awg.wait_for_trig()
 
@@ -81,12 +80,12 @@ class PulseReadout(object):
         return self._timelist
     @timelist.setter
     def timelist(self,timelist):
-        self._timelist = array(timelist).copy()
+        self._timelist = np.array(timelist).copy()
     def set_timelist(self,val):
         timelist = self._timelist
         timelist[self.change_index] = val
         self.awg.run(enable=False)
-        pulse_readout(self.awg, self.steplist, timelist, self.sample_rate,self.pulsefilename,self.ch,self.reshape)
+        pulse_readout(self.awg, self.steplist, timelist, self.sample_rate,self.pulsefilename,self.ch,self.gain)
         self.awg.run(enable=True)
     def get_timelist(self):
         return self._timelist
@@ -162,7 +161,7 @@ class PulseRabi(object):
         return self.phase              
 
 
-def pulse_readout(awg1, steplist, timelist, sample_rate,filename,ch,reshape=False):
+def pulse_readout(awg1, steplist, timelist, sample_rate,filename,ch,gain):
     """
     This function takes  the steplist normalize it and send the waveform to the awg
     then it resample the waveform to have correct time
@@ -171,18 +170,13 @@ def pulse_readout(awg1, steplist, timelist, sample_rate,filename,ch,reshape=Fals
     steplist= array of step voltage value
     timelist = array of time duration of each step
     sample_rate 
-    reshape  : if bias-tee used, average waveform at 0 by changing steplist 
     resample : if True, send a fixed size waveform and resample after in AWG, used for timelist bigger than 10ms !
     """
     # Normalisation
+    steplist=steplist*gain
     ampl=(max(abs(steplist)))
     steplist=(steplist/(ampl))
     res=[]
-
-    # Reshape timeliste if bias-tee used
-    if reshape:
-        timelist = reshape_time(timelist,steplist)
-        print('Change timelist : {}', timelist)
 
 
     for a,t in zip(steplist, timelist):
