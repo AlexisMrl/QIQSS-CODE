@@ -447,7 +447,7 @@ class MyMainWindow(baseclass, formclass):
             zIndex = int(self.set_display_2.currentIndex())
             self.dataToDisplay = self.data[zIndex]
             self.c = self.ax1f1.imshow(self.dataToDisplay.T, origin="lower", aspect='auto', cmap='RdBu_r')
-
+            # self.c = self.ax1f1.imshow(self.dataToDisplay.T, origin="lower", aspect='auto', cmap='RdBu_r')
             ################################################
             #Color bar
             fmt = ticker.ScalarFormatter(useMathText=True)
@@ -543,11 +543,12 @@ class MyMainWindow(baseclass, formclass):
         """
         yind=self.ycoord_ind[0]
         cop = self.data.copy()
+        if self.data[yind,0,0]>self.data[yind,0,1]:
+            print('true2')
+            self.data=cop[:,:,::-1]
+            cop=self.data.copy()
         if self.data[0,0,0]>self.data[0,1,0]:
             self.data=cop[:,::-1,:]
-            cop=self.data.copy()
-        if self.data[yind,0,0]>self.data[yind,0,1]:
-            self.data=cop[:,:,::-1]
             cop=self.data.copy()
         self.data[:,1::2,::-1] =cop[:,1::2,:]
         
@@ -602,7 +603,11 @@ class MyMainWindow(baseclass, formclass):
         if np.isnan(self.xmin): 
             self.xmax, self.xmin = self.findExtremum(xVariable)
             self.xmax= self.xmin+(self.data[xIndex][1,0]-self.data[xIndex][0,0])*len(self.data[xIndex][:,0])
-
+            if np.isnan(self.xmax):
+                self.xmax, self.xmin = self.findExtremum(xVariable)
+                self.xmin= self.xmax-(self.data[xIndex][-1,0]-self.data[xIndex][-2,0])*len(self.data[xIndex][:,0])
+            # print(self.xmin)
+            # print(self.xmax)
         if np.isnan(self.ymin):
             self.ymax, self.ymin = self.findExtremum(yVariable)
         
