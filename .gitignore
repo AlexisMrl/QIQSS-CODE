@@ -1,4 +1,5 @@
 .vscode/settings.json
+*.pyc
 Code_Pulse/TEMP.py
 Code_Pulse/Pulse_V2.pyc
 CodeTransistor/TransistorFunction.pyc
