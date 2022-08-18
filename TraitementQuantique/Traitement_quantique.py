@@ -10,6 +10,7 @@
 
 import os
 import sys
+import re
 #import time
 import traceback
 #import logging
@@ -30,6 +31,7 @@ import numpy as np
 import sliderVert as SliderVert
 import Trace_profils
 import Diamond_simulation
+import DD_extracter
 import Cursors
 
 import contextlib
@@ -210,6 +212,7 @@ class MyMainWindow(baseclass, formclass):
         self.btn_clear.clicked.connect(self.clear)
         self.export_data.clicked.connect(self.export_data_matrix)
         self.btn_sim.clicked.connect(self.simulate)
+        self.btn_DD.clicked.connect(self.dd_extract)
         self.nb_sim = 0
         
         #Tools for derivative and filters
@@ -299,6 +302,14 @@ class MyMainWindow(baseclass, formclass):
         self.nb_sim +=1
         self.simulation.show()
 
+    def dd_extract(self):
+        """
+        Create a DiamondSimulation object for simulation
+        """
+        self.dd_extraction = DD_extracter.DDExtracter()
+        self.dd_extraction.setData(self.dataToDisplay.T, self.xmin, self.xmax, self.ymin, self.ymax)
+        self.dd_extraction.show()
+
     def displayDataButtons(self):
         self.cb_src1.blockSignals(True)
         self.cb_src2.blockSignals(True)
@@ -313,7 +324,7 @@ class MyMainWindow(baseclass, formclass):
         """
         Add name of new instrument here:
         """
-        instruments = ['lockin', 'Lockin', 'zurich', 'Zurich', 'zi']
+        instruments = ['lockin', 'lockin_2','Lockin', 'zurich', 'Zurich', 'zi']
         for h in instruments: self.add_Mag_Phase(h)
         
         #Setting x and y possible titles for axis
@@ -441,13 +452,14 @@ class MyMainWindow(baseclass, formclass):
         self.ax1f1.tick_params('both', which='both', direction='out')
         self.ax1f1.ticklabel_format(scilimits = (-2,3))
         self.ax1f1.ticklabel_format(useMathText=True)
-
+        self.ax1f1.tick_params(axis='x', labelsize='large')
+        self.ax1f1.tick_params(axis='y', labelsize='large')
         if self.twoDims:
             self.reshape2Ddata()  #Reshape the data if it contains 2D array
             zIndex = int(self.set_display_2.currentIndex())
             self.dataToDisplay = self.data[zIndex]
             self.c = self.ax1f1.imshow(self.dataToDisplay.T, origin="lower", aspect='auto', cmap='RdBu_r')
-
+            # self.c = self.ax1f1.imshow(self.dataToDisplay.T, origin="lower", aspect='auto', cmap='RdBu_r')
             ################################################
             #Color bar
             fmt = ticker.ScalarFormatter(useMathText=True)
@@ -543,11 +555,12 @@ class MyMainWindow(baseclass, formclass):
         """
         yind=self.ycoord_ind[0]
         cop = self.data.copy()
+        if self.data[yind,0,0]>self.data[yind,0,1]:
+            print('true2')
+            self.data=cop[:,:,::-1]
+            cop=self.data.copy()
         if self.data[0,0,0]>self.data[0,1,0]:
             self.data=cop[:,::-1,:]
-            cop=self.data.copy()
-        if self.data[yind,0,0]>self.data[yind,0,1]:
-            self.data=cop[:,:,::-1]
             cop=self.data.copy()
         self.data[:,1::2,::-1] =cop[:,1::2,:]
         
@@ -582,8 +595,8 @@ class MyMainWindow(baseclass, formclass):
         #names x and y and min and max for each axis
         xName = str(self.cb_src1.currentText())
         yName = str(self.cb_src2.currentText())
-        self.ax1f1.set_xlabel(xName)
-        self.ax1f1.set_ylabel(yName)
+        self.ax1f1.set_xlabel(xName,fontsize='x-large')
+        self.ax1f1.set_ylabel(yName,fontsize='x-large')
         self.setAxisIndexes()
         self.UpdateData()
     
@@ -601,6 +614,12 @@ class MyMainWindow(baseclass, formclass):
         #find min and max
         if np.isnan(self.xmin): 
             self.xmax, self.xmin = self.findExtremum(xVariable)
+            self.xmax= self.xmin+(self.data[xIndex][1,0]-self.data[xIndex][0,0])*len(self.data[xIndex][:,0])
+            if np.isnan(self.xmax):
+                self.xmax, self.xmin = self.findExtremum(xVariable)
+                self.xmin= self.xmax-(self.data[xIndex][-1,0]-self.data[xIndex][-2,0])*len(self.data[xIndex][:,0])
+            # print(self.xmin)
+            # print(self.xmax)
         if np.isnan(self.ymin):
             self.ymax, self.ymin = self.findExtremum(yVariable)
         
