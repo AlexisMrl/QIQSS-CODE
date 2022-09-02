@@ -31,6 +31,7 @@ import numpy as np
 import sliderVert as SliderVert
 import Trace_profils
 import Diamond_simulation
+import DD_extracter
 import Cursors
 
 import contextlib
@@ -210,6 +211,7 @@ class MyMainWindow(baseclass, formclass):
         self.btn_clear.clicked.connect(self.clear)
         self.export_data.clicked.connect(self.export_data_matrix)
         self.btn_sim.clicked.connect(self.simulate)
+        self.btn_DD.clicked.connect(self.dd_extract)
         self.nb_sim = 0
         
         #Tools for derivative and filters
@@ -297,6 +299,14 @@ class MyMainWindow(baseclass, formclass):
         self.simulation.setData(self.dataToDisplay.T, self.xmin, self.xmax, self.ymin, self.ymax)
         self.nb_sim +=1
         self.simulation.show()
+
+    def dd_extract(self):
+        """
+        Create a DiamondSimulation object for simulation
+        """
+        self.dd_extraction = DD_extracter.DDExtracter()
+        self.dd_extraction.setData(self.dataToDisplay.T, self.xmin, self.xmax, self.ymin, self.ymax)
+        self.dd_extraction.show()
 
     def displayDataButtons(self):
         self.cb_src1.blockSignals(True)
@@ -440,8 +450,8 @@ class MyMainWindow(baseclass, formclass):
         self.ax1f1.tick_params('both', which='both', direction='out')
         self.ax1f1.ticklabel_format(scilimits = (-2,3))
         self.ax1f1.ticklabel_format(useMathText=True)
-        self.ax1f1.tick_params(axis='x', labelsize='x-large')
-        self.ax1f1.tick_params(axis='y', labelsize='x-large')
+        self.ax1f1.tick_params(axis='x', labelsize='large')
+        self.ax1f1.tick_params(axis='y', labelsize='large')
         if self.twoDims:
             self.reshape2Ddata()  #Reshape the data if it contains 2D array
             zIndex = int(self.set_display_2.currentIndex())
@@ -583,8 +593,8 @@ class MyMainWindow(baseclass, formclass):
         #names x and y and min and max for each axis
         xName = str(self.cb_src1.currentText())
         yName = str(self.cb_src2.currentText())
-        self.ax1f1.set_xlabel(xName,fontsize='large')
-        self.ax1f1.set_ylabel(yName,fontsize='large')
+        self.ax1f1.set_xlabel(xName,fontsize='x-large')
+        self.ax1f1.set_ylabel(yName,fontsize='x-large')
         self.setAxisIndexes()
         self.UpdateData()
     
