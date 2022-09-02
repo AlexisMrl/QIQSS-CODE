@@ -1,10 +1,3 @@
-.vscode/settings.json
-*.pyc
-Code_Pulse/TEMP.py
-Code_Pulse/Pulse_V2.pyc
-CodeTransistor/TransistorFunction.pyc
-CodeTransistor/GraphStyle.pyc
-Code_Pulse/function_util.pyc
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,jupyternotebooks
