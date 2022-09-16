@@ -2,9 +2,9 @@
 
 # -- Project information
 
-project = 'Lumache'
-copyright = '2021, Graziella'
-author = 'Graziella'
+project = 'QIQSS'
+copyright = '2022, QIQSS'
+author = 'QIQSS'
 
 release = '0.1'
 version = '0.1.0'
