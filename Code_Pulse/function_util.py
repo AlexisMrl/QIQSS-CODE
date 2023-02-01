@@ -51,7 +51,7 @@ def single_Pulse_frag(timelist,steplist,start,stop,npts,sample_rate,index=1,wait
         #Marker
         res=[]
         for j in (timelist_copy):
-            res.append(zeros(int(j*sample_rate), dtype=int))
+            res.append(np.zeros(int(j*sample_rate), dtype=int))
         res = np.concatenate(res)        
         marker_temp=int(len(res))*[0]
         marker_temp[0:int(len(res)/2)] = int(len(res)/2)*[1]
@@ -63,13 +63,13 @@ def single_Pulse_frag(timelist,steplist,start,stop,npts,sample_rate,index=1,wait
             marker=marker+int(wait_time*sample_rate)*[0]
 
     
-    wavstr = array([i<<7 for i in marker], dtype=np.uint8)
+    wavstr = np.array([i<<7 for i in marker], dtype=np.uint8)
 
-    N=round(64*ceil(sample_rate*sum(new_timelist)/64)-sample_rate*sum(new_timelist))
+    N=round(64*np.ceil(sample_rate*sum(new_timelist)/64)-sample_rate*sum(new_timelist))
     new_timelist[-1]= new_timelist[-1]+N/sample_rate
     res=[]
     for a,j in zip(new_steplist, new_timelist):
-        res.append(zeros(int(j*sample_rate), dtype=int)+float(a))
+        res.append(np.zeros(int(j*sample_rate), dtype=int)+float(a))
     res = np.concatenate(res)
     wavstr=wavstr[0:len(res)]
 

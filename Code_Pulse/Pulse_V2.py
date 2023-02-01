@@ -47,7 +47,7 @@ class PulseReadout(object):
            raise ValueError('Sample rate too low for time resolution required')     
 
          # New timelist for sample = *64
-        N=round(64*ceil(self.sample_rate*sum(self.timelist)/64)-self.sample_rate*sum(self.timelist))
+        N=round(64*np.ceil(self.sample_rate*sum(self.timelist)/64)-self.sample_rate*sum(self.timelist))
         self.timelist[-1]= self.timelist[-1]+N/sample_rate
         print('new timelist is {}'.format(self.timelist))
 
@@ -180,7 +180,7 @@ def pulse_readout(awg1, steplist, timelist, sample_rate,filename,ch,gain):
 
 
     for a,t in zip(steplist, timelist):
-        res.append(zeros(int(t*sample_rate), dtype=int)+float(a))
+        res.append(np.zeros(int(t*sample_rate), dtype=int)+float(a))
     res = np.concatenate(res)
     awg1.volt_ampl.set(ampl, ch=ch)
     if filename in get(awg.list_waveforms):
