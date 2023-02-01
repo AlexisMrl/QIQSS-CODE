@@ -16,18 +16,16 @@ gain = 1/0.070795
 # Be Careful that impedance is on High Z on the AWG
 
 # code line to delete a waveform in the awg
-sample_rate=320e3
-timelist=array([5e-3, 5e-3]) #time duration of each step
+
+timelist=array([10e-3, 10e-3]) #time duration of each step
 steplist=array([0.0025,-0.0025])
-awg.waveform_delete('Test') 
-pulse_seq = PulseReadout(awg, steplist, timelist,sample_rate=sample_rate,pulsefilename='Test',ch=1,gain=gain)
-comment= comment_generator([pulse_seq],'Filter : 30 kHz \n Amp : 1e8 \n VB2 = 0.5 mV \n VD1 = 0.8225 V \n B = 0T')
+
 
 #############################
 ###Create readout Pulse   ###
 #############################
 timelist=array([2.5e-3, 5e-3, 2.5e-3, 1e-3]) #time duration of each step
-steplist=array([0.008,0.004,0,-0.02]) #voltage value of each step
+steplist=array([0.005,0.0025,0,-0.02]) #voltage value of each step
 sample_rate=320e3
 awg.waveform_delete('Test') 
 pulse_seq = PulseReadout(awg, steplist, timelist,sample_rate=sample_rate,pulsefilename='Test',ch=1,gain=gain)
@@ -62,7 +60,7 @@ fig = plt.figure(figsize=[8,8])
 ax = fig.add_subplot(111)
 ax.axes.tick_params(labelsize=20)
 im = ax.imshow(x[1],
-    extent=(0,10,-4,4),
+    extent=(0,13.5,-8,8),
     aspect="auto",
     origin="lower",
     cmap="RdBu_r")
@@ -83,18 +81,18 @@ plt.show()
 #####################################################  
 # For pulse to sweep read voltage, single shot no averaging
 ####################################################  
-timelist=array([2e-3, 6e-3, 2e-3, 1e-3]) #time duration of each step
-steplist=array([0.01,0.005,0,-0.01]) #voltage value of each step
+timelist=array([2.5e-3, 5e-3, 2.5e-3, 1e-3]) #time duration of each step
+steplist=array([0.005,0.0025,0,-0.02]) #voltage value of each step
 sample_rate=32e3
 timestr = time.strftime("%Y%m%d-%H%M%S")
 awg.waveform_delete('Test')
-filename='Die8_QBB24_3_3_single_shot_VB2_2p4V{}'.format(timestr)
-comment="""Filter : 10 kHz \n Amp : 1e8 \n VB2 = 2.5V \n VD1= 806.5mV \n B = 1T \n
+filename='Die8_QBB24_3_3_tunel_rate_VB2_2p5V{}'.format(timestr)
+comment="""Filter : 10 kHz \n Amp : 1e8 \n VB2 = 2.5V \n VD1= 797.5 mV \n B = 0T \n
 total time : {} \n steplist : {}\n  sample= {} """.format(timelist,steplist,get(rto.acquire_npoints))
 text_file = open(r"C:\Projets\IMEC TD\Die_8_QBB06_24_3_3\2022-10-14\dynamic\{}_comment_{}.txt".format(filename,timestr), "w")
 n = text_file.write(comment)
 text_file.close()
-s,t,m=run_frag(awg,rto,timelist,steplist,[0.0,0.01,200],sample_rate=sample_rate,index=1,wait_time=0.0025,rshape=True)
+s,t,m=run_frag(awg,rto,timelist,steplist,[0.0025,0.0025,1000],sample_rate=sample_rate,index=1,wait_time=0.0025,rshape=True)
 run_test(awg,rto,filename+'.npy')
 
 
@@ -105,16 +103,16 @@ run_test(awg,rto,filename+'.npy')
 # LINE CODE TO TAKE SERIES OF SINGLE SHOT READOUT WITH VARIOUS 
 # READ VOLTAGE FOR AVERAGING PURPOSE
 #####################################################  
-timelist=array([2e-3, 6e-3, 2e-3, 1e-3]) #time duration of each step
-steplist=array([0.01,0.005,0,-0.01])
+timelist=array([2.5e-3, 5e-3, 2.5e-3, 1e-3]) #time duration of each step
+steplist=array([0.006,0.003,0,-0.01])
 timestr = time.strftime("%Y%m%d-%H%M%S")
-sweep_value= np.linspace(0.002,0.007,501)
-sample_rate=32e3
-average=200
+sweep_value= np.linspace(0.00,0.006,501)
+sample_rate=320e6
+average=201
 filename='QBB24_34_single_shot_read_BX_1T_10kHz_lowVds{}'.format(timestr)
 for index,i in enumerate(sweep_value):
     s,t,m=run_frag(awg,rto,timelist,steplist,[i,i,average],sample_rate=sample_rate,index=1,wait_time=0.002,rshape=True)
-    run_test(awg,rto,fn=filename+'_{}.npy'.format(index))
+    run_test(filename+'_{}.npy'.format(index))
     
 
 comment="""Filter : 10 kHz \n Amp : 1e8 \n VB2 = 2.4V \n VD1= 812.5 mV \n B = 1T  \n sweep = {} {} {} \n
@@ -130,8 +128,8 @@ text_file.close()
 
 
 
-timelist=array([2e-3, 6e-3, 2e-3, 1e-3]) #time duration of each step
-steplist=array([0.01,0.005,0,-0.01])
+timelist=array([2.5e-3, 5e-3,2.5e-3]) #time duration of each step
+steplist=array([0.00,-0.0025,-0.005])
 slope = 0.01 #in V/s
 index = 1
 
