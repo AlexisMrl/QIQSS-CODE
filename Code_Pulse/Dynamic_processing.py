@@ -15,39 +15,37 @@ def gaussian_mixture(x,sigma,mu1,mu2,A1,A2):
 	f= (A1/np.sqrt(2*np.pi*sigma**2))*np.exp(- (x-mu1)**2/(2*sigma**2)) +(A2/np.sqrt(2*np.pi*sigma**2))*np.exp(-(x-mu2)**2/(2*sigma**2))
 	return f
 
-def counter(data,load_time,read_time,binwidth=0.1e-9,filter_value=4):
+def counter(data,load_time,empty_time,binwidth=0.1e-9,filter_value=4):
 	""" Compute and plot the histogram to choose threshold value """
 	print('HEY')
+
+	# reshape les data en enleveant le empty et load time envoy
 	resolution = data[0][0][2]-data[0][0][1]
-	t=data[0][0][int(load_time/resolution):len(data[0][0])-int(read_time/resolution)]-load_time
+	t=data[0][0][int(load_time/resolution):len(data[0][0])-int(empty_time/resolution)]-load_time
 	newdata=[]
 	for i in tqdm(data[1]):
-		newdata=np.append(newdata,i[int(load_time/resolution):len(i)-int(read_time/resolution)])
+		newdata=np.append(newdata,i[int(load_time/resolution):len(i)-int(empty_time/resolution)])
 	newdata = der.filters.gaussian_filter1d(newdata,filter_value)
+
+	plt.figure()
+	plt.plot(t,data[1][0][int(load_time/resolution):len(data[1][0])-int(empty_time/resolution)])
+
+	#trace l'histogramme
 	dist=pd.DataFrame(newdata)
 	fig, ax = plt.subplots()
-	dist.plot.hist(density=True,  bins=np.arange(min(newdata), max(newdata) + binwidth, binwidth),ax=ax)
+	dist.plot.density(ax=ax)
 	dist.plot.kde(ax=ax, legend=False)
 	ax.set_ylabel('Probability')
 	ax.grid(axis='y')
 	ax.set_facecolor('#d8dcd6')
-	
+	return newdata
 
-	x=np.arange(min(newdata), max(newdata), binwidth)
-	n=plt.hist(newdata, density=True, color='black',bins=binwidth,stacked=True)[0]
-
-	plt.figure()
-	param=fit.fitplot(gaussian_mixture, x, n, p0=[0.2e-9,-2.6e-9,-1.7e-9,5000,40000])
-	D=np.abs((param[0][1]-param[0][2])/np.sqrt(param[0][0]**2))
-	print('D = {}'.format(D))
-
-
-def tunnel_rate(data,load_time,read_time,threshold):
+def tunnel_rate(data,load_time,empty_time,threshold):
 	""" Calculate the tunnel rate """
 	#on reshape les donnes
 	resolution = data[0][0][2]-data[0][0][1]
 	cutinit=int(load_time/resolution)
-	cutend = len(data[0][0])-int(read_time/resolution)
+	cutend = len(data[0][0])-int(empty_time/resolution)
 	t=data[0][0][cutinit:cutend]-load_time
 	shape = [int(v) for v in data.shape]
 	shapecut=[shape[1],cutend-cutinit]
@@ -218,7 +216,7 @@ def trace_graph(x,y,z,extent,length):
 
 	return fig
 
-def average_data(filename,length,size,threshold,load_time,read_time,filter_value=5):
+def average_data(filename,length,size,threshold,load_time,empty_time,filter_value=5):
 	x=np.empty([length,size])
 	digit=np.empty([length,size])
 	results=np.empty([length,6])
@@ -236,7 +234,7 @@ def average_data(filename,length,size,threshold,load_time,read_time,filter_value
 		digit[i]=np.mean(digit_array,axis=0)
 
 		sa=int(size/np.max(data[0][0]))
-		results[i]=spin_search(data[0][0],digit_array[:,int(sa*load_time):len(data[0][0])-int(sa*read_time)])
+		results[i]=spin_search(data[0][0],digit_array[:,int(sa*load_time):len(data[0][0])-int(sa*empty_time)])
 
 	np.save(filename+'AVERAGED.npy',x)
 	np.save(filename+'DIGITIZE.npy',digit)
