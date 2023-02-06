@@ -10,25 +10,37 @@ import statistics as stats
 from pyHegel import fitting as fit
 from pyHegel import fit_functions as fitFCT
 from pyHegel import derivative as der
+import random
 
 def gaussian_mixture(x,sigma,mu1,mu2,A1,A2):
 	f= (A1/np.sqrt(2*np.pi*sigma**2))*np.exp(- (x-mu1)**2/(2*sigma**2)) +(A2/np.sqrt(2*np.pi*sigma**2))*np.exp(-(x-mu2)**2/(2*sigma**2))
 	return f
 
 def counter(data,load_time,empty_time,binwidth=0.1e-9,filter_value=4):
-	""" Compute and plot the histogram to choose threshold value """
-	print('HEY')
-
-	# reshape les data en enleveant le empty et load time envoy
+	""" Compute and plot the histogram to choose threshold value 
+	load_time et empty time enregistre
+	binwidth : largeur de chaque bin de l'histomgramme
+	filter_value : Valeur du filtre pour mooth les data, si none pas de filtrage
+	
+	"""
 	resolution = data[0][0][2]-data[0][0][1]
 	t=data[0][0][int(load_time/resolution):len(data[0][0])-int(empty_time/resolution)]-load_time
+
+	#filtrage et on plot la difference des deux 
+	plt.figure()
+	rand=random.randrange(len(data[1]))
+	plt.plot(t,data[1][rand][int(load_time/resolution):len(data[1][rand])-int(empty_time/resolution)])
+	if filter_value is not None:
+		data[1] = der.filters.gaussian_filter1d(data[1],filter_value)
+		plt.plot(t,data[1][rand][int(load_time/resolution):len(data[1][rand])-int(empty_time/resolution)])
+
+		
+	# reshape les data en enleveant le empty et load time envoye
+	# Et on concatene tout en un seul gros array pour traitement statistique
+
 	newdata=[]
 	for i in tqdm(data[1]):
 		newdata=np.append(newdata,i[int(load_time/resolution):len(i)-int(empty_time/resolution)])
-	newdata = der.filters.gaussian_filter1d(newdata,filter_value)
-
-	plt.figure()
-	plt.plot(t,data[1][0][int(load_time/resolution):len(data[1][0])-int(empty_time/resolution)])
 
 	#trace l'histogramme
 	dist=pd.DataFrame(newdata)
@@ -156,13 +168,20 @@ def spin_search(t,data):
 		in_time_std=stats.stdev(in_time)
 	except:
 		in_time_std=0
-
-
 	param=[np.mean(out_time),out_time_std,np.mean(in_time),in_time_std,num_event_out,num_event_in]
 	return param
 	
 
 def trace_graph(x,y,z,extent,length):
+	""" 
+	Function to plot the processed data from the average function, 
+	x = Averaged.py file
+	y = Digitize.py file
+	z = tunnel.py file
+	extent : the limit for the imshow plot first time and the voltage
+	length : size of the given files (number of sweep)
+	"""
+
 
 	fig = plt.figure(figsize=[20,4])
 	ax = fig.add_subplot(141)
@@ -217,10 +236,21 @@ def trace_graph(x,y,z,extent,length):
 	return fig
 
 def average_data(filename,length,size,threshold,load_time,empty_time,filter_value=5):
+	""" 
+	Does necessary data processing to analyse average single shot readout data 
+	Specially crucial for detecting spin
+	Take all the files 
+	filename : name of one file (without npy extension, will take all the files if they are in the same folder)
+	length : sweep size
+	size : number of point of sample per shot
+	threshold : Curren threshold to discriminate 0/1 state ()
+	load_time,empty_time : takes into account both time to remove them from analysis
+	filter_value : paramter faur gaussian filter
+	"""
+
 	x=np.empty([length,size])
 	digit=np.empty([length,size])
 	results=np.empty([length,6])
-	SA=int(size/13e-3)
 
 	for i in tqdm(range(length)):
 		file_number='{}'.format(i)
@@ -239,3 +269,21 @@ def average_data(filename,length,size,threshold,load_time,empty_time,filter_valu
 	np.save(filename+'AVERAGED.npy',x)
 	np.save(filename+'DIGITIZE.npy',digit)
 	np.save(filename+'tunnel.npy',results)
+
+
+def spin_up_prob(filename, time_sweep,size,threshold,filter_value=4):
+
+	length=len(time_sweep)
+	p_spin_up=np.empty([length])
+
+	for i in tqdm(range(length)):
+		file_number='{}'.format(i)
+		file= filename+'{}.npy'.format(file_number)
+		data=readfile(file)
+		data.shape=[2,-1,size]
+		data_filtered = der.filters.gaussian_filter1d(data[1],filter_value,axis=1)
+		digit_array = np.digitize(data_filtered,[threshold])
+		spin_up=spin_search(data[0][0],digit_array)[4]
+		p_spin_up[i]=spin_up
+	plt.plot(time_sweep,p_spin_up)
+	return p_spin_up

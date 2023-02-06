@@ -21,6 +21,53 @@
 # from typing import Concatenate
 
 
+def run_frag(awg,rto,timelist,steplist,param,sample_rate,index=1,wait_time=0.1,rshape=False):
+    """
+    This function create a pulse sequence and send it to the awg and run the measurement
+    Awg = awg
+    rto= oscilloscope
+    for the other argument see single_Pulse_frag
+    """
+    awg.waveform_delete('Test') 
+    s,t,m=single_Pulse_frag(timelist,steplist,param[0],param[1],param[2],sample_rate,index=index,wait_time=wait_time,rshape=rshape)
+    pulse_seq = PulseReadout(awg, s, t,sample_rate=sample_rate,pulsefilename='Test',ch=1,gain=gain)
+    awg.waveform_marker_data.set(m,wfname='Test')
+    wait(1)
+    awg.run()
+    
+    return s,t,m
+
+def run_test(awg,rto,fn='_%T.txt'):
+    rto._async_trig()
+    wait(.1)
+    awg.wait_for_trig()
+    rto.wait_after_trig()
+    rto._async_cleanup_after()
+    x= get(rto.fetch,history='all',filename=fn,bin='.npy')
+    return x
+
+
+def bf(data):
+    rto._async_trig()
+    wait(.1)
+    awg.wait_for_trig()
+    rto.wait_after_trig()
+    rto._async_cleanup_after()
+
+def run_T1(awg,rto,timelist,steplist,param,sample_rate,index,wait_time=0.1,rshape=False):
+    awg.waveform_delete('Test') 
+    s,t,m=T1_exp(timelist,steplist,param[0],param[1],param[2],sample_rate,index=index,wait_time=wait_time,rshape=rshape)
+    pulse_seq = PulseReadout(awg, s, t,sample_rate=sample_rate,pulsefilename='Test',ch=1,gain=gain)
+    awg.waveform_marker_data.set(m,wfname='Test')
+    wait(1)
+    awg.run()
+    
+    return s,t,m
+
+
+
+
+
 def single_Pulse_frag(timelist,steplist,start,stop,npts,sample_rate,index=1,wait_time=0,rshape=False,ramp=[]):
     """ This function generate an array of readout pulse with different read level for segmentation
     measurement on the oscilloscope.
@@ -118,35 +165,61 @@ def reshape(timelist,steplist):
         timelist_copy[-1]=np.abs(((sum((x*y) for x,y in zip(timelist[:-1],steplist[:-1]))))/steplist[-1])
     return timelist_copy    
 
-def run_frag(awg,rto,timelist,steplist,param,sample_rate,index=1,wait_time=0.1,rshape=False):
-    """
-    This function create a pulse sequence and send it to the awg and run the measurement
-    Awg = awg
-    rto= oscilloscope
-    for the other argument see single_Pulse_frag
-    """
-    awg.waveform_delete('Test') 
-    s,t,m=single_Pulse_frag(timelist,steplist,param[0],param[1],param[2],sample_rate,index=index,wait_time=wait_time,rshape=rshape)
-    pulse_seq = PulseReadout(awg, s, t,sample_rate=sample_rate,pulsefilename='Test',ch=1,gain=gain)
-    awg.waveform_marker_data.set(m,wfname='Test')
-    wait(1)
-    awg.run()
+
+
+def T1_exp(timelist,steplist,start,stop,npts,sample_rate,index,wait_time=0,rshape=False,ramp=[]):
+    """ This function generate an array of readout pulse with different read level for segmentation
+    measurement on the oscilloscope.
+    start, stop and npt are the sweep parameters of the load wait time. 
+    index : array index to sweep
+    wait_time : wait_time before each pulse
+    reshape : bias-tee reshape
+    ramp= [] parameter of the ramp for bias-tee compensation see ramp function for more detail
+    Return, new steplist, timelist, and necessary markers
     
-    return s,t,m
+     """
+    sweep_value= np.linspace(start,stop,npts)
+    timelist_copy=timelist.copy()
+    new_steplist, new_timelist=np.array([]),np.array([])
+    marker=[]
+    for i in sweep_value:
 
-def run_test(awg,rto,fn='_%T.txt'):
-    rto._async_trig()
-    wait(.1)
-    awg.wait_for_trig()
-    rto.wait_after_trig()
-    rto._async_cleanup_after()
-    x= get(rto.fetch,history='all',filename=fn,bin='.npy')
-    return x
+        timelist_copy[index]=i+ timelist[index]
+        if rshape:
+            timelist_copy=reshape(timelist_copy,steplist)
+      
+        new_steplist=np.append(new_steplist,steplist)
+        new_timelist=np.append(new_timelist,timelist_copy)
+        total_time=sum(timelist_copy)
 
+        #Marker au read time
+        res=[]
+        for j in (timelist_copy):
+            res.append(np.zeros(int(j*sample_rate), dtype=int))
+        res = np.concatenate(res)
 
-def bf(data):
-    rto._async_trig()
-    wait(.1)
-    awg.wait_for_trig()
-    rto.wait_after_trig()
-    rto._async_cleanup_after()
+        #fixe le marker de load a 0
+        marker_load = int(timelist_copy[index]*sample_rate)
+        marker_read =  int(timelist_copy[1]*sample_rate)
+
+        marker_temp=int(len(res))*[0]
+        marker_temp[marker_load-10:marker_load+marker_read] = int(len(marker_temp[marker_load-10:marker_load+marker_read]))*[1]
+        marker= marker+marker_temp
+        #Wait time
+        if wait_time != 0:
+            new_steplist=np.append(new_steplist,0)
+            new_timelist=np.append(new_timelist,[wait_time])
+            marker=marker+int(wait_time*sample_rate)*[0]
+
+    
+    wavstr = np.array([i<<7 for i in marker], dtype=np.uint8)
+
+    N=round(64*np.ceil(sample_rate*sum(new_timelist)/64)-sample_rate*sum(new_timelist))
+    new_timelist[-1]= new_timelist[-1]+N/sample_rate
+    res=[]
+    for a,j in zip(new_steplist, new_timelist):
+        res.append(np.zeros(int(j*sample_rate), dtype=int)+float(a))
+    res = np.concatenate(res)
+    wavstr=wavstr[0:len(res)]
+
+    return new_steplist,new_timelist,wavstr
