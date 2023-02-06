@@ -102,9 +102,9 @@ class save_file_dialog(QFileDialog):
     """
     Change path for own computer
     """
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, pathName="C:/Users/"):
       super(save_file_dialog, self).__init__(parent)
-      self.name = self.getSaveFileName(self, 'Save File','C:\Users\devj2901\Documents\Recherche\SimuBQ\projects\\', 'Dat files (*.dat)')
+      self.name = self.getSaveFileName(self, 'Save File',pathName, 'Dat files (*.dat)')
 
 #specify the ui file to load
 formclass, baseclass = uic.loadUiType('mainwindow.ui')
@@ -127,6 +127,7 @@ def get_exc_traceback(exc_type=None, exc_value=None, exc_traceback=None):
 
 MiB = 1024*1024
 main_logger = None
+
 def config_excepthook():
     """
         brief : ???
@@ -234,16 +235,17 @@ class MyMainWindow(baseclass, formclass):
     def on_TreeView_doubleClicked(self, index):
         indexItem = self.model.index(index.row(), 0, index.parent())
         self.filePath = self.model.filePath(indexItem)
-        if self.filePath[-3:]=='txt': self.readFile()
+        if self.filePath[-3:]=='txt': 
+            self.readFile()
     
     def readFile(self):
-        self.twoDims = True    
-        self.data, self.titles,self.headers = pyHu.readfile(self.filePath,getheaders=True,multi_sweep='force')
-            
+        self.twoDims = True
+        self.data, self.titles,self.headers = pyHu.readfile(self.filePath, getheaders=True, multi_sweep='force')
+        print(self.data)
         #If 1d data, do not use multi_sweep
         if np.shape(myapp.data)[1]==1 or len(np.shape(self.data))==2:
             self.twoDims = False
-            self.data, self.titles,self.headers = pyHu.readfile(self.filePath,getheaders=True,multi_sweep=False)
+            self.data, self.titles, self.headers = pyHu.readfile(self.filePath, getheaders=True,multi_sweep=False)
 
         self.comments=[c[len('#comment:= '):-1]for c in self.headers if c.startswith('#comment:=') or c.startswith('#com ...:=')]
         self.setComments()
@@ -279,7 +281,7 @@ class MyMainWindow(baseclass, formclass):
         Export data displayed in matrix shape for further ananlysis
         The (0,0) coordinates must be at the graph origin (origin = lower)
         """
-        s = save_file_dialog()
+        s = save_file_dialog(parent=None, pathName=self.filePath)
         if len(s.name[0]) != 0:
             f = open(s.name[0],'w')
             for x in range(self.dataToDisplay.shape[1]):
