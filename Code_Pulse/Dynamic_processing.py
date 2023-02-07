@@ -11,6 +11,16 @@ from pyHegel import fitting as fit
 from pyHegel import fit_functions as fitFCT
 from pyHegel import derivative as der
 import random
+import scipy.signal as sig
+
+def notch_filter(f0,signal, Q):
+	
+	time = signal[0]
+	fs = 1/(time[1]-time[0])
+	b,a=sig.iirnotch(f0, Q, fs)
+	filtered_signal=sig.filtfilt(b,a,signal[1])
+	return filtered_signal
+
 
 def gaussian_mixture(x,sigma,mu1,mu2,A1,A2):
 	f= (A1/np.sqrt(2*np.pi*sigma**2))*np.exp(- (x-mu1)**2/(2*sigma**2)) +(A2/np.sqrt(2*np.pi*sigma**2))*np.exp(-(x-mu2)**2/(2*sigma**2))
@@ -23,6 +33,7 @@ def counter(data,load_time,empty_time,binwidth=0.1e-9,filter_value=4):
 	filter_value : Valeur du filtre pour mooth les data, si none pas de filtrage
 	
 	"""
+	data_copy=data.copy()
 	resolution = data[0][0][2]-data[0][0][1]
 	t=data[0][0][int(load_time/resolution):len(data[0][0])-int(empty_time/resolution)]-load_time
 
@@ -31,15 +42,18 @@ def counter(data,load_time,empty_time,binwidth=0.1e-9,filter_value=4):
 	rand=random.randrange(len(data[1]))
 	plt.plot(t,data[1][rand][int(load_time/resolution):len(data[1][rand])-int(empty_time/resolution)])
 	if filter_value is not None:
-		data[1] = der.filters.gaussian_filter1d(data[1],filter_value)
-		plt.plot(t,data[1][rand][int(load_time/resolution):len(data[1][rand])-int(empty_time/resolution)])
+		data_notched=notch_filter(16e3,[data[0][0],data[1]],5)
+		data_notched=notch_filter(8e3,[data[0][0],data_notched],5)
+		data_notched=notch_filter(580,[data[0][0],data_notched],2)
+		data_copy[1] = der.filters.gaussian_filter1d(data_notched,filter_value)
+		plt.plot(t,data_copy[1][rand][int(load_time/resolution):len(data_copy[1][rand])-int(empty_time/resolution)])
 
 		
 	# reshape les data en enleveant le empty et load time envoye
 	# Et on concatene tout en un seul gros array pour traitement statistique
 
 	newdata=[]
-	for i in tqdm(data[1]):
+	for i in tqdm(data_copy[1]):
 		newdata=np.append(newdata,i[int(load_time/resolution):len(i)-int(empty_time/resolution)])
 
 	#trace l'histogramme
@@ -50,6 +64,7 @@ def counter(data,load_time,empty_time,binwidth=0.1e-9,filter_value=4):
 	ax.set_ylabel('Probability')
 	ax.grid(axis='y')
 	ax.set_facecolor('#d8dcd6')
+	fig.show()
 	return newdata
 
 def tunnel_rate(data,load_time,empty_time,threshold):
@@ -187,6 +202,7 @@ def trace_graph(x,y,z,extent,length):
 	ax = fig.add_subplot(141)
 	ax.axes.tick_params(labelsize=14)
 
+	# trace averaged 
 	im = ax.imshow(x,
 		extent=extent,
 		aspect="auto",
@@ -200,7 +216,7 @@ def trace_graph(x,y,z,extent,length):
 	plt.show()
 	plt.tight_layout()
 
-
+	# trace digitize
 	ax2 = fig.add_subplot(142)
 	ax2.axes.tick_params(labelsize=14)
 	im = ax2.imshow(y,
@@ -216,6 +232,7 @@ def trace_graph(x,y,z,extent,length):
 	plt.show()
 	plt.tight_layout()
 
+	#trace averaged event
 	ax3 = fig.add_subplot(143)
 	readV=np.linspace(extent[2],extent[3],length)
 	plt.plot(z[:,5],readV,'-o',label='num_event_in')
@@ -257,9 +274,17 @@ def average_data(filename,length,size,threshold,load_time,empty_time,filter_valu
 		file= filename+'{}.npy'.format(file_number)
 		data=readfile(file)
 		data.shape=[2,-1,size]
-		x[i]=np.mean(data[1],axis=0)
+		# x[i]=np.mean(data[1],axis=0)
 
-		data_filtered = der.filters.gaussian_filter1d(data[1],filter_value,axis=1)
+		# FILTERING
+		data_notched=notch_filter(16e3,[data[0][0],data[1]],5)
+		data_notched=notch_filter(8e3,[data[0][0],data_notched],5)
+		data_notched=notch_filter(580,[data[0][0],data_notched],2)
+		data_filtered = der.filters.gaussian_filter1d(data_notched,filter_value,axis=1)
+
+		x[i]=np.mean(data_filtered,axis=0)
+
+		# digitize
 		digit_array = np.digitize(data_filtered,[threshold])
 		digit[i]=np.mean(digit_array,axis=0)
 
