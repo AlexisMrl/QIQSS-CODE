@@ -62,7 +62,6 @@ def counter(data,size,load_time,empty_time,binwidth=0.1e-9,filter_value=4):
 	data_copy=data.copy()
 	data_notched=notch_filter(16e3,[data[0],data[1]],30)
 	data_notched=notch_filter(8e3,[data[0],data_notched],10)
-	data_notched=notch_filter(580,[data[0],data_notched],5)
 	data_copy[1]=data_notched
 	data_copy.shape=[2,-1,size]
 	data.shape=[2,-1,size]
@@ -205,22 +204,6 @@ def event_search(t,data):
 			num_event_out = num_event_out + len(w2[0])
 			num_event_in = num_event_in + len(w1[0])
 			if len(w2[0]) != 0: out_time = out_time+[t[w2[0][0]]]
-		# for j in range(data.shape[1]-1):
-		# # OUT EVENT
-		# 	if  (data[i][j] - data[i][j+1]) != 0 and in_Event == True :
-		# 		num_event_out = num_event_out+1
-		# 		in_Event = False
-		# 		if first_out == False:
-		# 			first_out = True
-		# 			out_time = np.append(out_time,t[j])
-
-		# # IN EVENT
-		# 	if (data[i][j] - data[i][j+1]) != 0 and in_Event == False:
-		# 		num_event_in = num_event_in+1
-		# 		in_Event = True
-		# 		if first_in == False:
-		# 			in_time = np.append(in_time,t[j])
-		# 			first_in == True	
 
 	num_event_out = num_event_out/int(data.shape[0])
 	num_event_in = num_event_in/int(data.shape[0])
@@ -232,7 +215,43 @@ def event_search(t,data):
 
 	param=[np.mean(out_time),out_time_std,num_event_out,num_event_in]
 	return param
+
+def spin_search(t,data):
+	""" 
+	Same as event_search but remove case where we have two event 
+	"""
+
+	total_event_out=0.
+	total_event_in=0.
+	count_exclusion = 0. 
 	
+	for i in range(data.shape[0]):
+
+		trace_event_out = 0.
+		trace_event_in = 0.
+
+		event=np.diff(data[i], axis=-1)
+		w1= np.where(event  == -1)
+		w2= np.where(event  == 1)
+
+		if data[i][0] == 0:
+			trace_event_out = trace_event_out + len(w1[0])
+			trace_event_in = trace_event_in + len(w2[0])
+			
+		else:
+			trace_event_out = trace_event_out + len(w2[0])
+			trace_event_in = trace_event_in + len(w1[0])
+
+		if 	trace_event_out > 1: 
+			count_exclusion +=1
+		else : 
+			total_event_out += trace_event_out
+			total_event_in += trace_event_in
+
+	total_event_out = total_event_out/(int(data.shape[0])-count_exclusion)
+	total_event_in = total_event_in/(int(data.shape[0])-count_exclusion)
+
+	return [total_event_out,count_exclusion,total_event_in]
 
 def trace_graph(x,y,z,extent,length):
 	""" 
@@ -322,7 +341,6 @@ def average_data(filename,length,size,threshold,load_time,empty_time,filter_valu
 		data_copy=data.copy()
 		data_notched=notch_filter(16e3,[data[0],data[1]],30)
 		data_notched=notch_filter(8e3,[data[0],data_notched],10)
-		data_notched=notch_filter(580,[data[0],data_notched],5)
 		data_copy[1]=data_notched
 		data_copy.shape=[2,-1,size]
 		data.shape=[2,-1,size]
@@ -350,9 +368,10 @@ def average_data(filename,length,size,threshold,load_time,empty_time,filter_valu
 
 def spin_up_prob(filename, time_sweep,size,threshold,filter_value=4):
 
-	length=len(time_sweep)
-	p_spin_up=np.empty([length])
 
+	length = len(time_sweep)
+	p_spin_up = np.empty([length])
+	n_exclusion = np.empty([length])
 	for i in tqdm(range(length)):
 		file_number='{}'.format(i)
 		file= filename+'{}.npy'.format(file_number)
@@ -360,7 +379,8 @@ def spin_up_prob(filename, time_sweep,size,threshold,filter_value=4):
 		data.shape=[2,-1,size]
 		data_filtered = der.filters.gaussian_filter1d(data[1],filter_value,axis=1)
 		digit_array = np.digitize(data_filtered,[threshold])
-		spin_up=spin_search(data[0][0],digit_array)[4]
+		spin_up, exclusion, in_event = spin_search(data[0][0],digit_array)
+		n_exclusion[i] = exclusion
 		p_spin_up[i]=spin_up
 	plt.plot(time_sweep,p_spin_up)
-	return p_spin_up
+	return p_spin_up,n_exclusion
