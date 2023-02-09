@@ -13,11 +13,37 @@ from pyHegel import derivative as der
 import random
 import scipy.signal as sig
 
+def single_graph(data,amplitude):
+	""""
+	PLOT A SINGLE GRAPH WITHOUT TREATMENT
+	"""
+	fig = plt.figure(figsize=[8,8])
+	ax = fig.add_subplot(111)
+	ax.axes.tick_params(labelsize=20)
+	im = ax.imshow(data[1],
+	    extent=(0,max(data[0,0])*1e3,amplitude[0],amplitude[1]),
+	    aspect="auto",
+	    origin="lower",
+	    cmap="RdBu_r")
+	cbar = fig.colorbar(im)
+	cbar.set_label(r"I A",fontsize=20)
+	cbar.ax.tick_params(labelsize=20) 
+	ax.set_xlabel('Time (ms)', fontsize=20)
+	ax.set_ylabel('read voltage (mV)', fontsize=20)
+	plt.tight_layout()
+	plt.show()
+	return fig
+
+
 def notch_filter(f0,signal, Q):
-	
+	"""
+	IMPLEMENT A NOTCH FILTER
+	"""
+
 	time = signal[0]
 	fs = 1/(time[1]-time[0])
-	b,a=sig.iirnotch(f0, Q, fs)
+	w0=(f0/(fs/2))
+	b,a=sig.iirnotch(w0, Q)
 	filtered_signal=sig.filtfilt(b,a,signal[1])
 	return filtered_signal
 
@@ -26,7 +52,7 @@ def gaussian_mixture(x,sigma,mu1,mu2,A1,A2):
 	f= (A1/np.sqrt(2*np.pi*sigma**2))*np.exp(- (x-mu1)**2/(2*sigma**2)) +(A2/np.sqrt(2*np.pi*sigma**2))*np.exp(-(x-mu2)**2/(2*sigma**2))
 	return f
 
-def counter(data,load_time,empty_time,binwidth=0.1e-9,filter_value=4):
+def counter(data,size,load_time,empty_time,binwidth=0.1e-9,filter_value=4):
 	""" Compute and plot the histogram to choose threshold value 
 	load_time et empty time enregistre
 	binwidth : largeur de chaque bin de l'histomgramme
@@ -34,6 +60,13 @@ def counter(data,load_time,empty_time,binwidth=0.1e-9,filter_value=4):
 	
 	"""
 	data_copy=data.copy()
+	data_notched=notch_filter(16e3,[data[0],data[1]],30)
+	data_notched=notch_filter(8e3,[data[0],data_notched],10)
+	data_notched=notch_filter(580,[data[0],data_notched],5)
+	data_copy[1]=data_notched
+	data_copy.shape=[2,-1,size]
+	data.shape=[2,-1,size]
+
 	resolution = data[0][0][2]-data[0][0][1]
 	t=data[0][0][int(load_time/resolution):len(data[0][0])-int(empty_time/resolution)]-load_time
 
@@ -42,10 +75,7 @@ def counter(data,load_time,empty_time,binwidth=0.1e-9,filter_value=4):
 	rand=random.randrange(len(data[1]))
 	plt.plot(t,data[1][rand][int(load_time/resolution):len(data[1][rand])-int(empty_time/resolution)])
 	if filter_value is not None:
-		data_notched=notch_filter(16e3,[data[0][0],data[1]],5)
-		data_notched=notch_filter(8e3,[data[0][0],data_notched],5)
-		data_notched=notch_filter(580,[data[0][0],data_notched],2)
-		data_copy[1] = der.filters.gaussian_filter1d(data_notched,filter_value)
+		data_copy[1] = der.filters.gaussian_filter1d(data_copy[1],filter_value)
 		plt.plot(t,data_copy[1][rand][int(load_time/resolution):len(data_copy[1][rand])-int(empty_time/resolution)])
 
 		
@@ -64,8 +94,10 @@ def counter(data,load_time,empty_time,binwidth=0.1e-9,filter_value=4):
 	ax.set_ylabel('Probability')
 	ax.grid(axis='y')
 	ax.set_facecolor('#d8dcd6')
-	fig.show()
-	return newdata
+	plt.show()
+
+
+	return newdata,data_copy
 
 def tunnel_rate(data,load_time,empty_time,threshold):
 	""" Calculate the tunnel rate """
@@ -146,44 +178,59 @@ def exp_decay(x, a):
 	return np.exp(-x/a)
 
 
-def spin_search(t,data):
+def event_search(t,data):
 	""" count the number of in and out event
 	return the average number of event, average tunnel time
 	and the std deviation """
 	num_event_out=0.
 	num_event_in=0.
 	out_time=[]
-	in_time=[]
-
+	
 	for i in range(data.shape[0]):
-		out_Event=False
-		in_Event=False
-		for j in range(data.shape[1]-1):
-			if  (data[i][j] - data[i][j+1]) == 1 and out_Event == False:
-				num_event_out = num_event_out+1
-				out_time = np.append(out_time,t[j])
-				out_Event = True
-			elif (data[i][j] - data[i][j+1]) == 1 : 
-				num_event_out = num_event_out+1
 
-			if (data[i][j] - data[i][j+1]) == -1 and in_Event==False:
-				num_event_in = num_event_in+1
-				in_time = np.append(in_time,t[j])
-				in_Event = True
-			elif (data[i][j] - data[i][j+1]) == -1:
-				num_event_in = num_event_in+1
-			
+		first_in = False
+		first_out = False
+
+		in_Event = True
+		event=np.diff(data[i], axis=-1)
+		w1= np.where(event  == -1)
+		w2= np.where(event  == 1)
+
+		if data[i][0] == 0:
+			num_event_out = num_event_out + len(w1[0])
+			num_event_in = num_event_in + len(w2[0])
+			if len(w1[0]) != 0: 
+				out_time = out_time+ [t[w1[0][0]]]
+		else:
+			num_event_out = num_event_out + len(w2[0])
+			num_event_in = num_event_in + len(w1[0])
+			if len(w2[0]) != 0: out_time = out_time+[t[w2[0][0]]]
+		# for j in range(data.shape[1]-1):
+		# # OUT EVENT
+		# 	if  (data[i][j] - data[i][j+1]) != 0 and in_Event == True :
+		# 		num_event_out = num_event_out+1
+		# 		in_Event = False
+		# 		if first_out == False:
+		# 			first_out = True
+		# 			out_time = np.append(out_time,t[j])
+
+		# # IN EVENT
+		# 	if (data[i][j] - data[i][j+1]) != 0 and in_Event == False:
+		# 		num_event_in = num_event_in+1
+		# 		in_Event = True
+		# 		if first_in == False:
+		# 			in_time = np.append(in_time,t[j])
+		# 			first_in == True	
+
 	num_event_out = num_event_out/int(data.shape[0])
 	num_event_in = num_event_in/int(data.shape[0])
+	out_time = np.array(out_time)
 	try:
-		out_time_std=stats.stdev(out_time)
+		out_time_std = stats.stdev(out_time)
 	except:
 		out_time_std=0
-	try:
-		in_time_std=stats.stdev(in_time)
-	except:
-		in_time_std=0
-	param=[np.mean(out_time),out_time_std,np.mean(in_time),in_time_std,num_event_out,num_event_in]
+
+	param=[np.mean(out_time),out_time_std,num_event_out,num_event_in]
 	return param
 	
 
@@ -213,8 +260,6 @@ def trace_graph(x,y,z,extent,length):
 	cbar.ax.tick_params(labelsize=14) 
 	ax.set_xlabel('Time (ms)', fontsize=14)
 	ax.set_ylabel('(mV)', fontsize=14)
-	plt.show()
-	plt.tight_layout()
 
 	# trace digitize
 	ax2 = fig.add_subplot(142)
@@ -229,17 +274,18 @@ def trace_graph(x,y,z,extent,length):
 	cbar.ax.tick_params(labelsize=14) 
 	ax2.set_xlabel('Time (ms)', fontsize=14)
 	ax2.set_ylabel('(mV)', fontsize=14)
-	plt.show()
-	plt.tight_layout()
 
 	#trace averaged event
 	ax3 = fig.add_subplot(143)
-	readV=np.linspace(extent[2],extent[3],length)
-	plt.plot(z[:,5],readV,'-o',label='num_event_in')
-	plt.plot(z[:,4],readV,'-o',label='num_event_out')
+	readV = np.linspace(extent[2],extent[3],length)
+	line = [0.5]*length
+	plt.plot(z[:,3],readV,'-o',label='num_event_in')
+	plt.plot(z[:,2],readV,'-o',label='num_event_out')
+	plt.plot(line,readV,'--')
 	ax3.set_xlabel('Average number of event', fontsize=14)
 	ax3.set_ylabel('Read level (mV)', fontsize=14)
-	ax3.set_xlim([0,5])
+	ax3.set_xlim([0,10])
+
 	ax3.legend()
 
 	ax4 = fig.add_subplot(144)
@@ -249,7 +295,7 @@ def trace_graph(x,y,z,extent,length):
 	ax4.set_xscale('log')
 	ax4.set_xlim([1e-5,1e-2])
 	ax4.legend()
-
+	plt.tight_layout()
 	return fig
 
 def average_data(filename,length,size,threshold,load_time,empty_time,filter_value=5):
@@ -267,21 +313,27 @@ def average_data(filename,length,size,threshold,load_time,empty_time,filter_valu
 
 	x=np.empty([length,size])
 	digit=np.empty([length,size])
-	results=np.empty([length,6])
+	results=np.empty([length,4])
 
 	for i in tqdm(range(length)):
 		file_number='{}'.format(i)
 		file= filename+'{}.npy'.format(file_number)
 		data=readfile(file)
+		data_copy=data.copy()
+		data_notched=notch_filter(16e3,[data[0],data[1]],30)
+		data_notched=notch_filter(8e3,[data[0],data_notched],10)
+		data_notched=notch_filter(580,[data[0],data_notched],5)
+		# data_copy[1]=data_notched
+		data_copy.shape=[2,-1,size]
 		data.shape=[2,-1,size]
 		# x[i]=np.mean(data[1],axis=0)
 
-		# FILTERING
-		data_notched=notch_filter(16e3,[data[0][0],data[1]],5)
-		data_notched=notch_filter(8e3,[data[0][0],data_notched],5)
-		data_notched=notch_filter(580,[data[0][0],data_notched],2)
-		data_filtered = der.filters.gaussian_filter1d(data_notched,filter_value,axis=1)
-
+	
+		if filter_value is not None:
+			# FILTERING
+			data_filtered = der.filters.gaussian_filter1d(data_copy[1],filter_value,axis=1)
+		else : 
+			data_filtered = data[1].copy()
 		x[i]=np.mean(data_filtered,axis=0)
 
 		# digitize
@@ -289,7 +341,7 @@ def average_data(filename,length,size,threshold,load_time,empty_time,filter_valu
 		digit[i]=np.mean(digit_array,axis=0)
 
 		sa=int(size/np.max(data[0][0]))
-		results[i]=spin_search(data[0][0],digit_array[:,int(sa*load_time):len(data[0][0])-int(sa*empty_time)])
+		results[i]=event_search(data[0][0],digit_array[:,int(sa*load_time):len(data[0][0])-int(sa*empty_time)])
 
 	np.save(filename+'AVERAGED.npy',x)
 	np.save(filename+'DIGITIZE.npy',digit)
