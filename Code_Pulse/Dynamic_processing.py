@@ -323,7 +323,7 @@ def average_data(filename,length,size,threshold,load_time,empty_time,filter_valu
 		data_notched=notch_filter(16e3,[data[0],data[1]],30)
 		data_notched=notch_filter(8e3,[data[0],data_notched],10)
 		data_notched=notch_filter(580,[data[0],data_notched],5)
-		# data_copy[1]=data_notched
+		data_copy[1]=data_notched
 		data_copy.shape=[2,-1,size]
 		data.shape=[2,-1,size]
 		# x[i]=np.mean(data[1],axis=0)
