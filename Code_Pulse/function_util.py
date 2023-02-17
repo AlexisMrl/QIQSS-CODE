@@ -203,7 +203,7 @@ def T1_exp(timelist,steplist,start,stop,npts,sample_rate,index,wait_time=0,rshap
         marker_read =  int(timelist_copy[1]*sample_rate)
 
         marker_temp=int(len(res))*[0]
-        marker_temp[marker_load-10:marker_load+marker_read] = int(len(marker_temp[marker_load-10:marker_load+marker_read]))*[1]
+        marker_temp[marker_load-1:marker_load+marker_read] = int(len(marker_temp[marker_load-1:marker_load+marker_read]))*[1]
         marker= marker+marker_temp
         #Wait time
         if wait_time != 0:

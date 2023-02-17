@@ -62,6 +62,7 @@ def counter(data,size,load_time,empty_time,binwidth=0.1e-9,filter_value=4):
 	data_copy=data.copy()
 	data_notched=notch_filter(16e3,[data[0],data[1]],30)
 	data_notched=notch_filter(8e3,[data[0],data_notched],10)
+	data_notched=notch_filter(580,[data[0],data_notched],5)
 	data_copy[1]=data_notched
 	data_copy.shape=[2,-1,size]
 	data.shape=[2,-1,size]
@@ -224,7 +225,6 @@ def spin_search(t,data):
 	total_event_out=0.
 	total_event_in=0.
 	count_exclusion = 0. 
-	
 	for i in range(data.shape[0]):
 
 		trace_event_out = 0.
@@ -241,7 +241,7 @@ def spin_search(t,data):
 		else:
 			trace_event_out = trace_event_out + len(w2[0])
 			trace_event_in = trace_event_in + len(w1[0])
-
+			
 		if 	trace_event_out > 1: 
 			count_exclusion +=1
 		else : 
@@ -250,7 +250,7 @@ def spin_search(t,data):
 
 	total_event_out = total_event_out/(int(data.shape[0])-count_exclusion)
 	total_event_in = total_event_in/(int(data.shape[0])-count_exclusion)
-
+	
 	return [total_event_out,count_exclusion,total_event_in]
 
 def trace_graph(x,y,z,extent,length):
@@ -341,6 +341,7 @@ def average_data(filename,length,size,threshold,load_time,empty_time,filter_valu
 		data_copy=data.copy()
 		data_notched=notch_filter(16e3,[data[0],data[1]],30)
 		data_notched=notch_filter(8e3,[data[0],data_notched],10)
+		data_notched=notch_filter(580,[data[0],data_notched],10)
 		data_copy[1]=data_notched
 		data_copy.shape=[2,-1,size]
 		data.shape=[2,-1,size]
@@ -361,26 +362,33 @@ def average_data(filename,length,size,threshold,load_time,empty_time,filter_valu
 		sa=int(size/np.max(data[0][0]))
 		results[i]=event_search(data[0][0],digit_array[:,int(sa*load_time):len(data[0][0])-int(sa*empty_time)])
 
+	
+
 	np.save(filename+'AVERAGED.npy',x)
 	np.save(filename+'DIGITIZE.npy',digit)
 	np.save(filename+'tunnel.npy',results)
+	# np.save(filename+'extent.npy',extent)
 
-
-def spin_up_prob(filename, time_sweep,size,threshold,filter_value=4):
+def spin_up_prob(filename, time_sweep,size,threshold,filter_value=4,cut=None):
 
 
 	length = len(time_sweep)
 	p_spin_up = np.empty([length])
+	delta = np.empty([length])
 	n_exclusion = np.empty([length])
 	for i in tqdm(range(length)):
 		file_number='{}'.format(i)
 		file= filename+'{}.npy'.format(file_number)
 		data=readfile(file)
 		data.shape=[2,-1,size]
+		if cut is not None:
+			data=data[:,:,0:800]
 		data_filtered = der.filters.gaussian_filter1d(data[1],filter_value,axis=1)
 		digit_array = np.digitize(data_filtered,[threshold])
-		spin_up, exclusion, in_event = spin_search(data[0][0],digit_array)
+		spin_up, exclusion, in_event= spin_search(data[0][0],digit_array)
 		n_exclusion[i] = exclusion
-		p_spin_up[i]=spin_up
-	plt.plot(time_sweep,p_spin_up)
+		p_spin_up[i] = spin_up
+		
+
+	plt.plot(time_sweep,p_spin_up,'o')
 	return p_spin_up,n_exclusion
