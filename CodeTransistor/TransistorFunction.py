@@ -272,7 +272,7 @@ def vth(data, w, c1, trans_type):
 			try:
 				i_vthlin = np.argmin(abs(i.I-current_vthlin))
 			except:
-			    raise ValueError("lst should be sorted by (Vds, T) growing")
+				raise ValueError("lst should be sorted by (Vds, T) growing")
 			# current, voltage's derivative and fit error associated to this voltage
 			i.Vthlin = i.Vg[i_vthlin]
 			dv_vthlin = 1 / np.average(derivative[1][i_vthlin - 5 : i_vthlin + 5])

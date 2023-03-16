@@ -13,7 +13,7 @@ def yes_or_no():
 	while "the answer is invalid":
 
 		try:
-			reply = str(raw_input('Are you sure you want to save the graph, it could erase previous ?'+' (y/n): ')).lower().strip()
+			reply = str(input('Are you sure you want to save the graph, it could erase previous ?'+' (y/n): ')).lower().strip()
 		except:
 			reply = str(input('Are you sure you want to save the graph, it could erase previous ?'+' (y/n): ')).lower().strip()
 		if reply[0] == 'y':
@@ -29,7 +29,7 @@ def graph(fig,path=None,name=None, xlabel=None, ylabel=None, title=None, legend=
 	ax.axes.tick_params(labelsize=labelsize)
 	fig.set_size_inches(figsize)
 	for axis in ['top','bottom','left','right']:
- 		 ax.spines[axis].set_linewidth(bordelinewidth)
+		 ax.spines[axis].set_linewidth(bordelinewidth)
 	if xlabel is not None:
 		ax.set_xlabel(xlabel,fontsize=fontsize)
 	if ylabel is not None:
@@ -57,10 +57,12 @@ def graph(fig,path=None,name=None, xlabel=None, ylabel=None, title=None, legend=
 			plt.savefig(filename,dpi=500,transparent=True) 
 
 
-def graphPy3(fig,path=None,name=None, xlabel=None, ylabel=None, title=None, legend=None, col=1,
+def graphPy3(fig,ax=None,path=None,name=None, xlabel=None, ylabel=None, title=None, legend=None, col=1,
 		 xtick=None, xticklabel=None, xlim=None,ylim=None,figsize=[6,5],fontsize=12,labelsize=10,
-		 save=False, png=True,aspect=True):
-	ax=fig.gca()
+		 save=False, format='png',aspect=True):
+	if ax == None:
+		ax=plt.gcf().gca()
+
 	ax.axes.tick_params(labelsize=labelsize)
 	fig.set_size_inches(figsize)
 	if xlabel is not None:
@@ -72,24 +74,20 @@ def graphPy3(fig,path=None,name=None, xlabel=None, ylabel=None, title=None, lege
 	if legend is not None:
 		ax.legend(legend,fontsize=fontsize, ncol=col,loc=0)
 	if xtick is not None:
-		plt.xticks(xtick, xticklabel)
+		ax.set_xticks(xtick, xticklabel)
 	if xlim is not None:
-		plt.xlim(xlim)
+		ax.set_xlim(xlim)
 	if ylim is not None:
-		plt.ylim(ylim)
-	# if aspect:
-		# ax.set_box_aspect(1)	
+		ax.set_ylim(ylim)
+	if aspect:
+		ax.set_box_aspect(1)	
 	plt.tight_layout()
 
 	if save==True:
-		save=yes_or_no()
 		if save==True:
-			if png==True:
-				filename=path+'\\'+name+'.png'
-				plt.savefig(filename,dpi=300, transparent=True) 
-			else:
-				filename=path+'\\'+name+'.svg'
-				plt.savefig(filename,dpi=300) 
+			filename=path+'\\'+name+'.' +format
+			plt.savefig(filename,dpi=500, transparent=True) 
+
 		
 
 
