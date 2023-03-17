@@ -31,9 +31,30 @@ class Device:
 	def __init__(self):
 		self.list_data=[]
 		self.dibl = []
+		self.T_lin = 0
+		self.T_sat = 0
+		self.ss_sat = 0
+		self.ss_lin = 0
+		self.Vth_lin = 0
+		self.vth_sat = 0
 
-	def plot_idvg(self,fig=None,ax=None):
-		plt.plot()
+	def generate_list(self):
+		# temperature list
+		self.T_lin = [d['Temp'] for d in self.list_data if d['curve_type'] == 'lin']
+		self.T_sat = [d['Temp'] for d in self.list_data if d['curve_type'] == 'sat']
+		#ion and ioff 
+		self.ioff_lin = [d['Ioff'] for d in self.list_data if d['curve_type'] == 'lin']
+		self.ioff_err = [d['Ioff_err'] for d in self.list_data if d['curve_type'] == 'lin']
+		self.ioff_sat = [d['Ioff'] for d in self.list_data if d['curve_type'] == 'sat']
+		self.ion_lin = [d['Ion'] for d in self.list_data if d['curve_type'] == 'lin']
+		self.ion_sat = [d['Ion'] for d in self.list_data if d['curve_type'] == 'sat']
+		# Vth
+		self.Vth_lin = [d['Vth'] for d in self.list_data if d['curve_type'] == 'lin']
+		self.Vth_error = [d['Vth_err'] for d in self.list_data if d['curve_type'] == 'lin']
+		self.Vth_sat =[d['Vth'] for d in self.list_data if d['curve_type'] == 'sat']
+		# SS
+		self.ss_lin =[d['ss'] for d in self.list_data if d['curve_type'] == 'lin']
+		self.ss_sat =[d['ss'] for d in self.list_data if d['curve_type'] == 'sat']
 
 	def dibl_calc(self, val=None):
 		'''
@@ -108,25 +129,11 @@ class Device:
 		ax6 = fig.add_subplot (4,2,6) # ion with T
 		ax7 = fig.add_subplot (4,2,7) # DIBL
 		size=[8,18]
+		#generate value
+		self.generate_list()
 		#temperature legends
 		str_temp_lin = [str(d['Temp']) + ' K' for d in self.list_data if d['curve_type'] == 'lin'] 
 		str_temp_sat = [str(d['Temp']) + ' K' for d in self.list_data if d['curve_type'] == 'sat'] 
-		# temperature list
-		T_lin = [d['Temp'] for d in self.list_data if d['curve_type'] == 'lin']
-		T_sat = [d['Temp'] for d in self.list_data if d['curve_type'] == 'sat']
-		#ion and ioff 
-		ioff_lin = [d['Ioff'] for d in self.list_data if d['curve_type'] == 'lin']
-		ioff_err = [d['Ioff_err'] for d in self.list_data if d['curve_type'] == 'lin']
-		ioff_sat = [d['Ioff'] for d in self.list_data if d['curve_type'] == 'sat']
-		ion_lin = [d['Ion'] for d in self.list_data if d['curve_type'] == 'lin']
-		ion_sat = [d['Ion'] for d in self.list_data if d['curve_type'] == 'sat']
-		# Vth
-		Vth_lin = [d['Vth'] for d in self.list_data if d['curve_type'] == 'lin']
-		Vth_error = [d['Vth_err'] for d in self.list_data if d['curve_type'] == 'lin']
-		Vth_sat =[d['Vth'] for d in self.list_data if d['curve_type'] == 'sat']
-		# SS
-		ss_lin =[d['ss'] for d in self.list_data if d['curve_type'] == 'lin']
-		ss_sat =[d['ss'] for d in self.list_data if d['curve_type'] == 'sat']
 
 		# string of vds value
 		str_vds_lin = r'$V_{DS}$ = ' + [str(int(d['Vds']*1e3)) for d in self.list_data if d['curve_type'] == 'lin'][0] + ' mV'
@@ -148,27 +155,27 @@ class Device:
 				ax2.semilogy(i['Vg'],i['I'],'o', markersize = 2,color = colorbar(c1))
 				c1 +=1
 
-		ax3.semilogx(T_lin,ss_lin,'-o', label = str_vds_lin)
-		ax3.semilogx(T_sat,ss_sat,'-o', label = str_vds_sat)
+		ax3.semilogx(self.T_lin,self.ss_lin,'-o', label = str_vds_lin)
+		ax3.semilogx(self.T_sat,self.ss_sat,'-o', label = str_vds_sat)
 		ax3.legend()
 
-		# ax4.semilogx(T_lin,Vth_lin,'-o', label = str_vds_lin)
-		ax4.errorbar(T_lin,Vth_lin,yerr=Vth_error,marker='o',capsize=4, elinewidth=1, label = str_vds_lin)
-		ax4.semilogx(T_sat,Vth_sat,'-o', label = str_vds_sat)
+		# ax4.semilogx(self.T_lin,Vth_lin,'-o', label = str_vds_lin)
+		ax4.errorbar(self.T_lin,self.Vth_lin,yerr=self.Vth_error,marker='o',capsize=4, elinewidth=1, label = str_vds_lin)
+		ax4.semilogx(self.T_sat,self.Vth_sat,'-o', label = str_vds_sat)
 		ax4.legend()
 
-		ax5.loglog(T_lin,ion_lin, '-o',label = str_vds_lin)
-		ax5.loglog(T_sat,ion_sat, '-o',label = str_vds_sat)
+		ax5.loglog(self.T_lin,self.ion_lin, '-o',label = str_vds_lin)
+		ax5.loglog(self.T_sat,self.ion_sat, '-o',label = str_vds_sat)
 		ax5.legend()
 		try:
-			ax6.errorbar(T_lin,ioff_lin, yerr=ioff_err,marker='o',capsize=4, elinewidth=1, label = str_vds_lin)
-			ax6.loglog(T_sat,ioff_sat,'-o', label = str_vds_sat)		
+			ax6.errorbar(self.T_lin,self.ioff_lin, yerr=self.ioff_err,marker='o',capsize=4, elinewidth=1, label = str_vds_lin)
+			ax6.loglog(self.T_sat,self.ioff_sat,'-o', label = str_vds_sat)		
 			ax6.legend()
 		except:
 			print('no ioff')
 
 		try:	
-			ax7.semilogx(T_lin,self.dibl,'-o')
+			ax7.semilogx(self.T_lin,self.dibl,'-o')
 		except:
 			print ('no dibl')
 
@@ -185,7 +192,7 @@ class Device:
 					legend = str_temp_sat, col =2, fontsize=10)
 		# in case no sat data
 		try: max(ss_sat)
-		except : ss_sat=[np.max(ss_lin)]
+		except : ss_sat=[np.max(self.ss_lin)]
 		graphPy3(fig,ax3,name=None, 
 					xlabel='T (K)', ylabel=r'SS (mv/decade)',
 					title='Subthreshold swing',
@@ -531,6 +538,7 @@ def full_analysis(dev,savepath,name, save = False):
 					path = savepath,
 					save = save)
 		# Save Data if save is True
+		dev.generate_list() # génere les list
 		if save:
 			with open(savepath +'\\' + name + ".pickle", 'wb') as DataSave:
 				pickle.dump(dev, DataSave)
