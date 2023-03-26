@@ -26,6 +26,7 @@ def create_dict():
 			'Vth' : 0,
 			'Vth_err' : 0,
 			'ss' : 0,
+			'ss_err':0,
 			'ssi' : 0,
 			'dibl' : 0,
 			'ss_current' : [[],[]],
@@ -232,6 +233,108 @@ def load_data_antoine(folder):
 	device.list_data = sorted(device.list_data, key=lambda d: (d['Vds'],d['Temp'])) 
 	clear_output()
 	return device
+
+def load_data_finfet(folder,t_type='n'):
+	"""
+	Load Id-Vg measurements.
+	create the data dictionnary and put all of them in a list
+	The function return the list of Mydata (see MyData class for method)
+	assign Vds and Temperature value. 
+	IMPORTANT
+	Everytime you have new way of taking and saving data you should create a new loadData function.
+	Make sure to have an output with same format as this one
+	folder: folder with all the data.
+	"""
+	#cherche toutes les donnees de transistor dans le fichier pour traitement
+	file_list=[f for f in os.listdir(folder) if os.path.isfile(folder+f)]
+	file_list=[folder+s  for s in file_list]
+	device = Device()  # list of dictionnary that regroup all data from a device
+	for i in range(len(file_list)):  # For each file
+
+		datatemp = create_dict()  #Create the data dictionnary 
+		file = util.readfile(file_list[i], getheaders=True) # extract data
+
+		#On initialise le dictionnaire
+		datatemp['comment'] = file[2]
+		datatemp['RawData'] = file[0]
+		datatemp['Data_headers'] = file[1]
+		if t_type == 'p':
+			datatemp['Vg'] = file[0][0][::-1]
+			datatemp['I'] = -file[0][1][::-1]
+			datatemp['transistor_type'] = 'pmos'
+		else: 
+			datatemp['Vg'] = file[0][0]
+			datatemp['I'] = file[0][1]
+	
+		# search in comment  Temperature amd vds
+		# Extract Temperature and Vd from the comments of the file
+		for line in datatemp['comment']:
+			match = re.search("T =([^;]\S+)", line)
+			match2 = re.search("Vd =([^;]\S+)",line)
+			if match:
+				datatemp['Temp'] = float(match.group((1))[2:-1])
+				if round(datatemp['Temp']) == 4 : datatemp['Temp'] = round(datatemp['Temp'],1)
+				else : datatemp['Temp'] = round(datatemp['Temp'])
+			if match2:
+				datatemp['Vds'] = float(match2.group((1)))
+
+		# tell if lin or sat
+		if abs(datatemp['Vds']) < 0.2: datatemp['curve_type'] = 'lin' 
+		else: datatemp['curve_type'] = 'sat'
+
+		device.list_data.append(datatemp)
+
+	# sorting data for all Vds lin first
+	device.list_data = sorted(device.list_data, key=lambda d: (abs(d['Vds']),d['Temp'])) 
+	clear_output()
+	return device
+
+
+def load_data_gab(folder):
+	"""
+	Specificity : same as Antoine except i remove first point
+	because of issue with SMU
+	"""
+	#cherche toutes les donnees de transistor dans le fichier pour traitement
+	file_list=[f for f in os.listdir(folder) if os.path.isfile(folder+f)]
+	file_list=[folder+s  for s in file_list]
+	device = Device()  # list of dictionnary that regroup all data from a device
+	for i in range(len(file_list)):  # For each file
+
+		datatemp = create_dict()  #Create the data dictionnary 
+		file = util.readfile(file_list[i], getheaders=True) # extract data
+
+		#On initialise le dictionnaire
+		datatemp['comment'] = file[2]
+		datatemp['RawData'] = file[0]
+		datatemp['Data_headers'] = file[1]
+		datatemp['Vg'] = file[0][0][3:]
+		datatemp['I'] = file[0][1][3:]
+	
+		# search in comment  Temperature amd vds
+		# Extract Temperature and Vd from the comments of the file
+		for line in datatemp['comment']:
+			match = re.search("T =([^;]\S+)", line)
+			match2 = re.search("Vd =([^;]\S+)",line)
+			if match:
+				datatemp['Temp'] = float(match.group((1))[2:-1])
+				if round(datatemp['Temp']) == 4 : datatemp['Temp'] = round(datatemp['Temp'],1)
+				else : datatemp['Temp'] = round(datatemp['Temp'])
+			if match2:
+				datatemp['Vds'] = float(match2.group((1)))
+
+		# tell if lin or sat
+		if datatemp['Vds'] < 0.2: datatemp['curve_type'] = 'lin' 
+		else: datatemp['curve_type'] = 'sat'
+
+		device.list_data.append(datatemp)
+
+	# sorting data for all Vds lin first
+	device.list_data = sorted(device.list_data, key=lambda d: (d['Vds'],d['Temp'])) 
+	clear_output()
+	return device
+
+# def load_fata
 
 def load_data_dominic(folder):
 

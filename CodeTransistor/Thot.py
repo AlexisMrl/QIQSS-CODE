@@ -37,7 +37,9 @@ class Device:
 		self.ss_lin = 0
 		self.Vth_lin = 0
 		self.vth_sat = 0
-
+		self.ss_sat_err = 0
+		self.ss_lin_err = 0
+		
 	def generate_list(self):
 		# temperature list
 		self.T_lin = [d['Temp'] for d in self.list_data if d['curve_type'] == 'lin']
@@ -55,6 +57,8 @@ class Device:
 		# SS
 		self.ss_lin =[d['ss'] for d in self.list_data if d['curve_type'] == 'lin']
 		self.ss_sat =[d['ss'] for d in self.list_data if d['curve_type'] == 'sat']
+		self.ss_sat_err = [d['ss_err'] for d in self.list_data if d['curve_type'] == 'sat']
+		self.ss_lin_err = [d['ss_err'] for d in self.list_data if d['curve_type'] == 'lin']
 
 	def dibl_calc(self, val=None):
 		'''
@@ -88,18 +92,21 @@ class Device:
 		for index, i in enumerate(self.list_data):
 			
 			if i['curve_type'] == 'lin':
-				ax1.semilogx(i['ss_current'][0],i['ss_current'][1],color=colorbar(index))
+				ax1.semilogx(i['ss_current'][0],i['ss_current'][1],'o',markersize=2,color=colorbar(index))
 			if i['curve_type'] == 'sat':
 				c1 +=1
-				ax2.semilogx(i['ss_current'][0],i['ss_current'][1],color=colorbar(c1))
+				ax2.semilogx(i['ss_current'][0],i['ss_current'][1],'o',markersize=2,color=colorbar(c1))
 
 		current_lin = [d['ssi'] for d in self.list_data if d['curve_type'] == 'lin'][0]
 		try:
 			current_sat = [d['ssi'] for d in self.list_data if d['curve_type'] == 'sat'][0]
 		except :
 			current_sat = None
+
+		# On trace la ligne de selection de courant
 		ax1.plot([current_lin]*2,[0,100],'--')
 		ax2.plot([current_sat]*2,[0,100],'--')	
+
 		graphPy3(fig_check,ax1,name=None,
 	   				xlabel='I (A)', ylabel=r'SS (mV/decade)',
 					title='Linear regime',
@@ -155,8 +162,9 @@ class Device:
 				ax2.semilogy(i['Vg'],i['I'],'o', markersize = 2,color = colorbar(c1))
 				c1 +=1
 
-		ax3.semilogx(self.T_lin,self.ss_lin,'-o', label = str_vds_lin)
-		ax3.semilogx(self.T_sat,self.ss_sat,'-o', label = str_vds_sat)
+		ax3.errorbar(self.T_lin,self.ss_lin,yerr=self.ss_lin_err,marker='o', label = str_vds_lin,elinewidth=1)
+		ax3.errorbar(self.T_sat,self.ss_sat,yerr=self.ss_sat_err,marker='o', label = str_vds_sat,elinewidth=1)
+		ax3.set_xscale('log')
 		ax3.legend()
 
 		# ax4.semilogx(self.T_lin,Vth_lin,'-o', label = str_vds_lin)
@@ -197,7 +205,7 @@ class Device:
 					xlabel='T (K)', ylabel=r'SS (mv/decade)',
 					title='Subthreshold swing',
 					xtick=T_tick, xticklabel= T_tick_label,
-					ylim=[0,max(ss_sat)],
+					ylim=[0,max(ss_sat)+5],
 					figsize=size)
 		graphPy3(fig,ax4,name=None, 
 					xlabel='T (K)', ylabel=r'$V_{TH}$ (V)',
@@ -234,7 +242,7 @@ def ion_ioff(device):
 			i['Ioff'] = np.mean(i['I'][index_0-5:index_0+5])
 			i['Ioff_err'] = np.std(i['I'][index_0-5:index_0+5])
 			if i['Ioff'] < 0: 
-				i['Ioff'] = 1e-13
+				i['Ioff'] = 1e-14
 			i['Ion'] = i['I'][-1]
  
 def vth_calculator(device,fig=None):
@@ -292,15 +300,18 @@ def vth_calculator(device,fig=None):
 				# if T slighlty different, correct the error and take the closest T
 				print('Warning, not exactly equal temperature between lin and sat curve')
 				lin = list(filter(lambda temp: temp['Temp'] < i['Temp']+2 and temp['Temp'] > i['Temp']-2 and temp['curve_type'] == 'lin',device.list_data))[0]
+
 			# Find the value of current at vth (lin)
 			if lin['Vth'] == 0:
 				i['Vth'] = None
 				print('No linear vth were found')
 			else:
-				i_lin =  lin['I'][np.searchsorted(i['Vg'],lin['Vth'])]
-				i['Vth'] = i['Vg'][np.argmin(np.abs(i['I']-i_lin))]
-			
-
+				if i['transistor_type'] == 'nmos':
+					i_lin =  lin['I'][np.searchsorted(i['Vg'],lin['Vth'])]
+					i['Vth'] = i['Vg'][np.argmin(np.abs(i['I']-i_lin))]
+				if i['transistor_type'] == 'pmos':
+					i_lin =  lin['I'][::-1][np.searchsorted(i['Vg'][::-1],lin['Vth'])]
+					i['Vth'] = i['Vg'][np.argmin(np.abs(i['I']-i_lin))]
 def ss_slider(device):
 	'''
 	find the subthreshold swing of the transistor. 
@@ -412,7 +423,7 @@ def ss_fit(device,val):
 
 		c1 = 0 # compteur for colorbar
 		for index,i in enumerate(device.list_data):
-			
+			error = [] #error bar for ss
 			i['ss_current'] = [[],[]]
 			# I in log base 10 
 			y=np.ma.log10(np.abs(i['I']))
@@ -440,15 +451,17 @@ def ss_fit(device,val):
 												 p0)
 					
 					# on initialise le courant et la valeur du fit dans ss current
-					ss = 1/courbefit[0][1]*1e3 # en mv/decade
+					ss = 1/abs(courbefit[0][1])*1e3 # en mv/decade
 					i['ss_current'][0].append(i['I'][j])
 					i['ss_current'][1].append(ss)
+					error.append(ss*(courbefit[2][1]/courbefit[0][1]))
 
 				# on fixe la valeur du ss en fonction du choix du courant
 				arg = np.argmin(np.abs(np.asarray(i['ss_current'][0])-ss_i_lin))
 				i['ss'] = i['ss_current'][1][arg]
+				i['ss_err'] = error[arg] + np.std(i['ss_current'][1][arg-1:arg+1])
 				i['ssi'] = ss_i_lin
-
+				
 				# on trace SS en fonction de I
 				ax1.semilogx(i['ss_current'][0],i['ss_current'][1],
 		 					'o',markersize=2,color=colorbar(index))
@@ -476,13 +489,15 @@ def ss_fit(device,val):
 												y[j:j+2*fit_w],
 												 p0)
 					# on initialise le courant et la valeur du fit dans ss current
-					ss = 1/courbefit[0][1]*1e3 # en mv/decade
+					ss = 1/abs(courbefit[0][1])*1e3 # en mv/decade
 					i['ss_current'][0].append(i['I'][j])
 					i['ss_current'][1].append(ss)
-					
-				# on fixe la valeur du ss en fonction du choix du courant
+					error.append(ss*(courbefit[2][1]/courbefit[0][1]))
+
+				# on fixe la valeur du ss en fonction du choix du courant et on calcul l'incertitude
 				arg = np.argmin(np.abs(np.asarray(i['ss_current'][0])-ss_i_sat))
 				i['ss'] = i['ss_current'][1][arg]
+				i['ss_err'] = error[arg] + np.std(i['ss_current'][1][arg-2:arg+2])
 				i['ssi'] = ss_i_sat
 
 				# on trace SS en fonction de I
