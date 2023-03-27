@@ -8,9 +8,11 @@ from IPython.display import clear_output
 import util
 import sys
 sys.path.append('C:\Program Files\Labber\Script')
-
-import Labber
-
+try:
+	import Labber
+except:
+	print('no Labber detected')
+	
 def create_dict():
 	data_dictionnary = {
 			'RawData' : np.array([]),
