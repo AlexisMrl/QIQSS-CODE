@@ -191,13 +191,13 @@ class Device:
 					xlabel='Vg (V)', ylabel=r'I (A)',
 					title=str_vds_lin, 
 					figsize=size,
-					legend = str_temp_lin,col=2, fontsize=10)
+					legend = str_temp_lin,col=1, fontsize=10)
 
 		graphPy3(fig,ax2,name=None, 
 					xlabel='Vg (V)', ylabel=r'I (A)',
 					title=str_vds_sat,
 					figsize=size,
-					legend = str_temp_sat, col =2, fontsize=10)
+					legend = str_temp_sat, col =1, fontsize=10)
 		# in case no sat data
 		try: max(ss_sat)
 		except : ss_sat=[np.max(self.ss_lin)]
@@ -454,7 +454,7 @@ def ss_fit(device,val):
 					ss = 1/abs(courbefit[0][1])*1e3 # en mv/decade
 					i['ss_current'][0].append(i['I'][j])
 					i['ss_current'][1].append(ss)
-					error.append(ss*(courbefit[2][1]/courbefit[0][1]))
+					error.append(abs(ss*(courbefit[2][1]/courbefit[0][1])))
 
 				# on fixe la valeur du ss en fonction du choix du courant
 				arg = np.argmin(np.abs(np.asarray(i['ss_current'][0])-ss_i_lin))
@@ -492,7 +492,7 @@ def ss_fit(device,val):
 					ss = 1/abs(courbefit[0][1])*1e3 # en mv/decade
 					i['ss_current'][0].append(i['I'][j])
 					i['ss_current'][1].append(ss)
-					error.append(ss*(courbefit[2][1]/courbefit[0][1]))
+					error.append(abs(ss*(courbefit[2][1]/courbefit[0][1])))
 
 				# on fixe la valeur du ss en fonction du choix du courant et on calcul l'incertitude
 				arg = np.argmin(np.abs(np.asarray(i['ss_current'][0])-ss_i_sat))
