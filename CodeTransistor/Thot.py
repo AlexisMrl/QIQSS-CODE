@@ -497,7 +497,7 @@ def ss_fit(device,val):
 				# on fixe la valeur du ss en fonction du choix du courant et on calcul l'incertitude
 				arg = np.argmin(np.abs(np.asarray(i['ss_current'][0])-ss_i_sat))
 				i['ss'] = i['ss_current'][1][arg]
-				i['ss_err'] = error[arg] + np.std(i['ss_current'][1][arg-2:arg+2])
+				i['ss_err'] = error[arg] + np.std(i['ss_current'][1][arg-1:arg+1])
 				i['ssi'] = ss_i_sat
 
 				# on trace SS en fonction de I
