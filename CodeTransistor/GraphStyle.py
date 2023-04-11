@@ -29,7 +29,7 @@ def graph(fig,path=None,name=None, xlabel=None, ylabel=None, title=None, legend=
 	ax.axes.tick_params(labelsize=labelsize)
 	fig.set_size_inches(figsize)
 	for axis in ['top','bottom','left','right']:
-		 ax.spines[axis].set_linewidth(bordelinewidth)
+		ax.spines[axis].set_linewidth(bordelinewidth)
 	if xlabel is not None:
 		ax.set_xlabel(xlabel,fontsize=fontsize)
 	if ylabel is not None:
@@ -59,7 +59,7 @@ def graph(fig,path=None,name=None, xlabel=None, ylabel=None, title=None, legend=
 
 def graphPy3(fig,ax=None,path=None,name=None, xlabel=None, ylabel=None, title=None, legend=None, col=1,
 		 xtick=None, xticklabel=None, xlim=None,ylim=None,figsize=[6,5],fontsize=12,labelsize=10,
-		 save=False, format='png',aspect=True):
+		 save=False,trans=False, format='png',aspect=True):
 	if ax == None:
 		ax=plt.gcf().gca()
 
@@ -80,13 +80,15 @@ def graphPy3(fig,ax=None,path=None,name=None, xlabel=None, ylabel=None, title=No
 	if ylim is not None:
 		ax.set_ylim(ylim)
 	if aspect:
-		ax.set_box_aspect(1)	
+		ax.set_box_aspect(1)
+	else: 
+		ax.set_aspect('auto')
 	plt.tight_layout()
 
 	if save==True:
 		if save==True:
 			filename=path+'\\'+name+'.' +format
-			plt.savefig(filename,dpi=500, transparent=True) 
+			plt.savefig(filename,dpi=300, transparent=trans) 
 
 		
 

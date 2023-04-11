@@ -75,7 +75,6 @@ def load_data_claude(folder,temp_name='Temperature'):
 			match = re.search("Temperature:([^;]\S+)", line)
 			if match:
 				datatemp['Temp'] = float(match.group((1)))
-
 		# tell if lin or sat
 		if datatemp['Vds'] < 0.1: datatemp['curve_type'] = 'lin' 
 		else: datatemp['curve_type'] = 'sat'
@@ -86,6 +85,8 @@ def load_data_claude(folder,temp_name='Temperature'):
 	device.list_data = sorted(device.list_data, key=lambda d: (d['Vds'],d['Temp'])) 
 	clear_output()
 	return device
+
+
 
 def load_labber(folder,Vds_name=''):
 
@@ -123,6 +124,8 @@ def load_labber(folder,Vds_name=''):
 		# Temperature
 		try:
 			datatemp['Temp'] = file.getChannelValuesAsDict()['Lakeshore - Setpoint 1']
+			if datatemp['Temp'] == 275: datatemp['Temp'] = 294
+			if datatemp['Temp'] == 240: datatemp['Temp'] = 250
 		except:
 			datatemp['Temp'] = int(file.getData('Lakeshore 33x - Temperature C')[0,0])
 		# tell if lin or sat

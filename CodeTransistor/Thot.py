@@ -87,16 +87,16 @@ class Device:
 		ax1 = fig_check.add_subplot(2,2,3)
 		ax2 = fig_check.add_subplot(2,2,4)
 		# Colorbar from cool to warm
-		colorbar = plt.colormaps['plasma'].resampled(count_values_by_key(self.list_data,'Temp'))
+		T_lin = [d['Temp'] for d in self.list_data if d['curve_type'] == 'lin']
+		colorbar = plt.colormaps['plasma'].resampled(len(T_lin))
 		c1 = 0
 		for index, i in enumerate(self.list_data):
 			
 			if i['curve_type'] == 'lin':
 				ax1.semilogx(i['ss_current'][0],i['ss_current'][1],'o',markersize=2,color=colorbar(index))
 			if i['curve_type'] == 'sat':
-				c1 +=1
 				ax2.semilogx(i['ss_current'][0],i['ss_current'][1],'o',markersize=2,color=colorbar(c1))
-
+				c1 +=1
 		current_lin = [d['ssi'] for d in self.list_data if d['curve_type'] == 'lin'][0]
 		try:
 			current_sat = [d['ssi'] for d in self.list_data if d['curve_type'] == 'sat'][0]
@@ -125,7 +125,6 @@ class Device:
 		Plot on one figure all the results and save them
 		'''
 		# Colorbar from cool to warm
-		colorbar = plt.colormaps['plasma'].resampled(count_values_by_key(self.list_data,'Temp'))
 		c1 =0
 		fig = plt.figure()
 		ax1 = fig.add_subplot (4,2,1) # IdVg lin
@@ -139,6 +138,7 @@ class Device:
 		#generate value
 		self.generate_list()
 		#temperature legends
+		colorbar = plt.colormaps['plasma'].resampled(len(self.T_lin))
 		str_temp_lin = [str(d['Temp']) + ' K' for d in self.list_data if d['curve_type'] == 'lin'] 
 		str_temp_sat = [str(d['Temp']) + ' K' for d in self.list_data if d['curve_type'] == 'sat'] 
 
@@ -150,7 +150,7 @@ class Device:
 			str_vds_sat = None
 
 		#Temperature tick
-		T_tick = [1,4,10,50,300]
+		T_tick = [1,4,10,77,300]
 		T_tick_label = ['1','4','10','77','300']
 
 	# ON TRACE ID-VG
@@ -205,7 +205,7 @@ class Device:
 					xlabel='T (K)', ylabel=r'SS (mv/decade)',
 					title='Subthreshold swing',
 					xtick=T_tick, xticklabel= T_tick_label,
-					ylim=[0,max(ss_sat)+5],
+					ylim=[0,max(ss_sat)+10],
 					figsize=size)
 		graphPy3(fig,ax4,name=None, 
 					xlabel='T (K)', ylabel=r'$V_{TH}$ (V)',
@@ -239,12 +239,14 @@ def ion_ioff(device):
 
 	for i in device.list_data:
 			index_0 =np.argmin(np.abs(i['Vg']))
+			index_1 =np.argmin(np.abs(i['Vg']-i['Vds']))
 			i['Ioff'] = np.mean(i['I'][index_0-5:index_0+5])
 			i['Ioff_err'] = np.std(i['I'][index_0-5:index_0+5])
 			if i['Ioff'] < 0: 
 				i['Ioff'] = 1e-14
-			i['Ion'] = i['I'][-1]
- 
+			if i['Vds'] < 0.1:	
+				i['Ion'] = i['I'][-1]
+			else: i['Ion'] = i['I'][index_1]
 def vth_calculator(device,fig=None):
 	'''
 	find the threshold voltage of the transistor. 
