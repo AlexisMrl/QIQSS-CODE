@@ -47,6 +47,7 @@ class Device:
 		#ion and ioff 
 		self.ioff_lin = [d['Ioff'] for d in self.list_data if d['curve_type'] == 'lin']
 		self.ioff_err = [d['Ioff_err'] for d in self.list_data if d['curve_type'] == 'lin']
+		self.ioff_sat_err = [d['Ioff_err'] for d in self.list_data if d['curve_type'] == 'sat']
 		self.ioff_sat = [d['Ioff'] for d in self.list_data if d['curve_type'] == 'sat']
 		self.ion_lin = [d['Ion'] for d in self.list_data if d['curve_type'] == 'lin']
 		self.ion_sat = [d['Ion'] for d in self.list_data if d['curve_type'] == 'sat']
@@ -177,7 +178,8 @@ class Device:
 		ax5.legend()
 		try:
 			ax6.errorbar(self.T_lin,self.ioff_lin, yerr=self.ioff_err,marker='o',capsize=4, elinewidth=1, label = str_vds_lin)
-			ax6.loglog(self.T_sat,self.ioff_sat,'-o', label = str_vds_sat)		
+			ax6.errorbar(self.T_sat,self.ioff_sat, yerr=self.ioff_sat_err,marker='o',capsize=4, elinewidth=1, label = str_vds_lin)	
+			
 			ax6.legend()
 		except:
 			print('no ioff')
@@ -240,10 +242,10 @@ def ion_ioff(device):
 	for i in device.list_data:
 			index_0 =np.argmin(np.abs(i['Vg']))
 			index_1 =np.argmin(np.abs(i['Vg']-i['Vds']))
-			i['Ioff'] = np.mean(i['I'][index_0-5:index_0+5])
-			i['Ioff_err'] = np.std(i['I'][index_0-5:index_0+5])
+			i['Ioff'] = np.mean(i['I'][index_0-2:index_0+2])
+			i['Ioff_err'] = np.std(i['I'][index_0-2:index_0+2])
 			if i['Ioff'] < 0: 
-				i['Ioff'] = 1e-14
+				i['Ioff'] = i['Ioff_err']
 			if i['Vds'] < 0.1:	
 				i['Ion'] = i['I'][-1]
 			else: i['Ion'] = i['I'][index_1]

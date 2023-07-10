@@ -44,7 +44,7 @@ def linear(x, b, m=0.):
     This functions returns the standard linear function: mx + b
     For linear fit it is recommended to use the gen_poly module
     """
-    return m*x+b
+    return m*np.array(x)+b
 linear.display_str = r"$m x + b$"
 
 def gaussian(x, sigma, mu=0., A=1.):

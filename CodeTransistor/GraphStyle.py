@@ -50,19 +50,18 @@ def graph(fig,path=None,name=None, xlabel=None, ylabel=None, title=None, legend=
 	plt.tight_layout()
 
 	
-	if save==True:
-		save=yes_or_no()
+	# if save==True:
+	# 	save=yes_or_no()
 	if save==True:
 			filename=path+'\\'+name+'.'+format
 			plt.savefig(filename,dpi=500,transparent=True) 
 
 
 def graphPy3(fig,ax=None,path=None,name=None, xlabel=None, ylabel=None, title=None, legend=None, col=1,
-		 xtick=None, xticklabel=None, xlim=None,ylim=None,figsize=[6,5],fontsize=12,labelsize=10,
+		 xtick=None, xticklabel=None, xlim=None,ylim=None,figsize=[6,5],fontsize=14,labelsize=12,
 		 save=False,trans=False, format='png',aspect=True):
 	if ax == None:
 		ax=plt.gcf().gca()
-
 	ax.axes.tick_params(labelsize=labelsize)
 	fig.set_size_inches(figsize)
 	if xlabel is not None:
@@ -81,8 +80,6 @@ def graphPy3(fig,ax=None,path=None,name=None, xlabel=None, ylabel=None, title=No
 		ax.set_ylim(ylim)
 	if aspect:
 		ax.set_box_aspect(1)
-	else: 
-		ax.set_aspect('auto')
 	plt.tight_layout()
 
 	if save==True:

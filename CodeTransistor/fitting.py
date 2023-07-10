@@ -142,7 +142,7 @@ def _splitResult(names, ps, pes, signif=2):
             full_i.append(i)
         r = [name, pstr_l, pstr_r, pestr_l, pestr_r, expstr]
         ret_str.append(r)
-        ret_len.append( map(len,r) )
+        ret_len.append( list(map(len,r)) )
         i += 1
     ret_len = np.array(ret_len)
     if len(full_i) > 0:
@@ -186,7 +186,7 @@ def strResult(func, p, pe, extra={}, signif=2):
     else:
         kw = {}
     kw.update(extra)
-    splits, maxlen, maxlen_noerr = _splitResult(para+kw.keys(), list(p)+kw.values(), list(pe)+[0]*len(kw), signif=signif)
+    splits, maxlen, maxlen_noerr = _splitResult(para+list(kw.keys()), list(p)+list(kw.values()), list(pe)+[0]*len(kw), signif=signif)
     maxlen[0] += 1 # because of += ':'
     # unicode: plus-minus = 00B1, multiplication(times) = 00D7
     err_len = maxlen[2]+maxlen[3]+maxlen[4]+4 # +4 is for ' ± ' and the '.'
@@ -259,7 +259,7 @@ def plotResult(func, p, pe, extra={}, signif=2, loc='upper right', ax=None, form
             C : (.5, .5, 'center', 'center')
             }
     if not isinstance(loc, tuple):
-        if isinstance(loc, basestring):
+        if isinstance(loc, str):
             loc = codes[loc]
         x, y, ha, va = loc_para[loc]
         loc = x, y
@@ -295,14 +295,14 @@ def _handle_adjust(func, p0, adjust, noadjust):
     s = builtins.set()
     # cleanup adjust. Remove duplicates, handle named variables.
     for a in adjust:
-        if isinstance(a, basestring):
+        if isinstance(a, str):
             s.add(names.index(a)-1) # -1 to remove the x parameter of f(x, p1, ...)
         else:
             s.add(a)
     # Now cleanup noadjust
     sna = builtins.set()
     for na in noadjust:
-        if isinstance(na, basestring):
+        if isinstance(na, str):
             sna.add(names.index(na)-1)
         else:
             sna.add(na)
@@ -602,7 +602,8 @@ def fitplot(func, x, y, p0, yerr=None, extra={}, sel=None, fig=None, skip=False,
         # Another way would be to create a plot, use get_color() on it and remove the plot.
         try:
             # new in matplotlib 1.5
-            col_data = ax1._get_lines.prop_cycler.next()['color']
+            # col_data = ax1._get_lines.prop_cycler.next()['color']
+            col_data =  next(ax1._get_lines.prop_cycler)['color']
         except AttributeError:
             col_data = ax1._get_lines.color_cycle.next()
     if col_fit is None:
