@@ -1,0 +1,105 @@
+{
+    "baudrate": 115200,
+    "board_0_dac": 0,
+    "board_1_dac": 1,
+    "connected": "short",
+    "pulse_duration": 8,
+    "serial_number": "5563930373435191B0F0",
+    "switch_21": {
+        "current_mA": 50,
+        "port_1": {
+            "board": 1,
+            "polarity": "positive",
+            "reference_switch_board": 1,
+            "state": "open"
+        },
+        "port_2": {
+            "board": 1,
+            "polarity": "negative",
+            "reference_switch_board": 1,
+            "state": "close"
+        },
+        "type": "SPDT"
+    },
+    "switch_60": {
+        "current_mA": 120,
+        "port_1": {
+            "board": 0,
+            "polarity": "positive",
+            "reference_switch_board": 5,
+            "state": "close"
+        },
+        "port_2": {
+            "board": 0,
+            "polarity": "positive",
+            "reference_switch_board": 4,
+            "state": "close"
+        },
+        "port_3": {
+            "board": 0,
+            "polarity": "positive",
+            "reference_switch_board": 3,
+            "state": "close"
+        },
+        "port_4": {
+            "board": 0,
+            "polarity": "positive",
+            "reference_switch_board": 2,
+            "state": "close"
+        },
+        "port_5": {
+            "board": 0,
+            "polarity": "positive",
+            "reference_switch_board": 1,
+            "state": "close"
+        },
+        "port_6": {
+            "board": 0,
+            "polarity": "positive",
+            "reference_switch_board": 6,
+            "state": "close"
+        },
+        "type": "SP6T"
+    },
+    "switch_61": {
+        "current_mA": 80,
+        "port_1": {
+            "board": 1,
+            "polarity": "positive",
+            "reference_switch_board": 5,
+            "state": "close"
+        },
+        "port_2": {
+            "board": 1,
+            "polarity": "positive",
+            "reference_switch_board": 4,
+            "state": "close"
+        },
+        "port_3": {
+            "board": 1,
+            "polarity": "positive",
+            "reference_switch_board": 3,
+            "state": "close"
+        },
+        "port_4": {
+            "board": 1,
+            "polarity": "positive",
+            "reference_switch_board": 2,
+            "state": "close"
+        },
+        "port_5": {
+            "board": 1,
+            "polarity": "positive",
+            "reference_switch_board": 1,
+            "state": "close"
+        },
+        "port_6": {
+            "board": 1,
+            "polarity": "positive",
+            "reference_switch_board": 6,
+            "state": "close"
+        },
+        "type": "SP6T"
+    },
+    "timeout": 0.2
+}
