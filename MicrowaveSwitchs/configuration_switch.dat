@@ -25,39 +25,39 @@
         "current_mA": 120,
         "port_1": {
             "board": 0,
-            "polarity": "positive",
+            "polarity": "negative",
             "reference_switch_board": 5,
-            "state": "close"
+            "state": "open"
         },
         "port_2": {
             "board": 0,
-            "polarity": "positive",
+            "polarity": "negative",
             "reference_switch_board": 4,
-            "state": "close"
+            "state": "open"
         },
         "port_3": {
             "board": 0,
-            "polarity": "positive",
+            "polarity": "negative",
             "reference_switch_board": 3,
-            "state": "close"
+            "state": "open"
         },
         "port_4": {
             "board": 0,
-            "polarity": "positive",
+            "polarity": "negative",
             "reference_switch_board": 2,
-            "state": "close"
+            "state": "open"
         },
         "port_5": {
             "board": 0,
-            "polarity": "positive",
+            "polarity": "negative",
             "reference_switch_board": 1,
-            "state": "close"
+            "state": "open"
         },
         "port_6": {
             "board": 0,
-            "polarity": "positive",
+            "polarity": "negative",
             "reference_switch_board": 6,
-            "state": "close"
+            "state": "open"
         },
         "type": "SP6T"
     },
@@ -65,39 +65,39 @@
         "current_mA": 80,
         "port_1": {
             "board": 1,
-            "polarity": "positive",
+            "polarity": "negative",
             "reference_switch_board": 5,
-            "state": "close"
+            "state": "open"
         },
         "port_2": {
             "board": 1,
-            "polarity": "positive",
+            "polarity": "negative",
             "reference_switch_board": 4,
-            "state": "close"
+            "state": "open"
         },
         "port_3": {
             "board": 1,
-            "polarity": "positive",
+            "polarity": "negative",
             "reference_switch_board": 3,
-            "state": "close"
+            "state": "open"
         },
         "port_4": {
             "board": 1,
-            "polarity": "positive",
+            "polarity": "negative",
             "reference_switch_board": 2,
-            "state": "close"
+            "state": "open"
         },
         "port_5": {
             "board": 1,
-            "polarity": "positive",
+            "polarity": "negative",
             "reference_switch_board": 1,
-            "state": "close"
+            "state": "open"
         },
         "port_6": {
             "board": 1,
-            "polarity": "positive",
+            "polarity": "negative",
             "reference_switch_board": 6,
-            "state": "close"
+            "state": "open"
         },
         "type": "SP6T"
     },

@@ -2,19 +2,23 @@
 from __future__ import print_function
 import json
 import time
-import os
+from os import getcwd
+
 from string import split, join
+
 from serial import Serial
 from serial.tools import list_ports
 
 class UsbSwitch(object):
-    def __init__(self):
+    def __init__(self, file_name='C:/Users/dphy-dupontferrielab/Microwave_switch_control/configuration_switch.dat'):
         """
 
         :param file_name: Path of the configuration_switch.dat file (json file)
         :type file_name: basestring
         """
-        file_name = os.getcwd()
+        
+        file_name = getcwd() + "/configuration_switch.dat"
+        
         self.file_name = str(file_name)
         with open(self.file_name, 'r') as in_file:
             self.states_switches = json.load(in_file)
@@ -40,7 +44,7 @@ class UsbSwitch(object):
 
         if 'attenuator' in self.states_switches.keys():
             self.set_attenuator(self.states_switches['attenuator'])
-
+        
     def __del__(self):
         self.serial.close()
 
@@ -64,20 +68,23 @@ class UsbSwitch(object):
         self.save_data()
 
     def verify_presence_board(self):
-        self.serial.write('<PRESENT>\r\n')
         self.serial.flush()
+        self.serial.write('<PRESENT>\r\n')
 
         s = ''
         init_time = time.time()
-
+        tot = 0
         while s[-9:] != 'Present\r\n' or (time.time() - init_time) > 1.:
-            n = self.serial.read(10)
-
-            if not len(n):
+            tot += 1
+            n = self.serial.read_until()                         # Lis les 10 premiers bytes du port série (envoyés par l'Arduino)
+            print(n)
+            if not len(n):                                   # Si len(n) (= le nombre de bytes stockés dans n) est nul: on sort de la boucle
+                print( "I broke, n = ", n, " , len(n) = ", len(n), "\ns = ", s, '\ntot =', tot)
                 break
-
-            s += n
-
+        
+            s += n                                           
+        print("Temps écoulé: ", time.time() - init_time, "s\nNombre de boucles: ", tot)
+        print("s[-9:] = ", s[-9:])
         return s[-9:] == 'Present\r\n'
 
     def verify_last_command(self):
@@ -93,7 +100,7 @@ class UsbSwitch(object):
         self.serial.flush()
 
         s = self.readall()
-
+        print(s)
         h_bridge_voltage = float(s.split('=')[1])
         assert h_bridge_voltage > 20., "No voltage on the H-Bridge (%.3f V), verify connection and fusible" % \
                                        h_bridge_voltage
@@ -126,6 +133,7 @@ class UsbSwitch(object):
 
         if current_mA != float(self.states_switches['switch_%s' % switch]['current_mA']):
             self.states_switches['switch_%s' % switch]['current_mA'] = current_mA
+            print('Current has been changed for switch %s' % switch)
             self.save_data()
 
     def set_and_verify_dac(self, address_dac, value):
@@ -158,7 +166,7 @@ class UsbSwitch(object):
                 self.states_switches['switch_%s' % switch]['state'] = 'close'
             else:
                 self.states_switches['switch_%s' % switch]['state'] = 'open'
-
+            print('i changed polarity')
             self.save_data()
             polarity = None
 
@@ -274,6 +282,7 @@ class UsbSwitch(object):
             s += n
 
         #self.serial.timeout = timeout
+        
         return s
 
     def force_state_in_file(self):
