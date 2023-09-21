@@ -5,8 +5,8 @@ class Generator(object):
     ''' Class that return a generated source code from a Sequence ONLY! '''
     def __init__(self):
         self.code = '' # final string
-        self.seg_var_name = "'mySegment'"
-        self.seq_var_name = "'mySequence'"
+        self.seg_var_name = "mySegment"
+        self.seq_var_name = "mySequence"
 
     def write(self, end_string):
         self.code = self.code + end_string + '\n'
@@ -37,8 +37,11 @@ class Generator(object):
                     atom.duration)
             self.writeMethod(self.seg_var_name, 'insertNew', *args)
         # marks
+        marks = [(name, start_stop) for name, start_stop in segment.marks_dict.items()]
+        if marks == []:
+            return
         self.write('# marks')
-        for key, val in segment.marks_dict.items():
+        for key, val in marks:
             self.writeMethod(self.seg_var_name, 'mark', "'{}'".format(key), val)
     
     def genSequence(self, sequence):
@@ -54,21 +57,27 @@ class Generator(object):
         name='{name}')'''.format(**sequence.gen_kwargs)
         self.writeEqual(self.seq_var_name, make_varying)
 
+    def genPulseDraw(self, sequence):
+        self.writeSection('Drawing Pulse')
+        kws = "{}, sample_rate, superpose=True, color='tab:blue'".format(self.seq_var_name)
+        self.write('pulseDraw({})'.format(kws))
+
     def generate(self, sequence, sample_rate):
         self.code = ''
         dic = sequence.gen_kwargs
         dic['seg_name'] = sequence.original_segment.name
 
-        self.writeSection('Code generated from PulseBuilder GUI')
+        self.writeSection('Code auto-generated from PulseBuilder GUI')
+        self.write('%run -i pulse_v3.py')
         self.writeEqual('sample_rate', sample_rate)
         
         self.genSegment(sequence.original_segment)
         self.genSequence(sequence)
+        self.genPulseDraw(sequence)
 
         self.writeSection('Reload and modify your sequence by running this:')
-        self.write('#import PulseBuilder')
         self.write('#%run -i PulseBuilder')
-        self.write("#myapp.loadSeq({})".format(self.seq_var_name))
+        self.write("#pb.loadSeq({}, sample_rate)".format(self.seq_var_name))
         
         return self.code[1:]
 

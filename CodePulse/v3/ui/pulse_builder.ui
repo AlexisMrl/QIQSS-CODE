@@ -6,303 +6,35 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1143</width>
-    <height>741</height>
+    <width>1258</width>
+    <height>968</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="7" column="7">
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QLabel" name="label_9">
-        <property name="text">
-         <string>Sample rate S/s</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="PyScientificSpinBox" name="sb_sample_rate">
-        <property name="maximum">
-         <double>9999999999.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="7" rowspan="7">
-     <widget class="QTabWidget" name="preview">
-      <property name="currentIndex">
-       <number>0</number>
-      </property>
-      <widget class="QWidget" name="preview_segment">
-       <attribute name="title">
-        <string>Segment</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <widget class="MatplotlibWidget" name="segment_plot" native="true"/>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="preview_sequence">
-       <attribute name="title">
-        <string>Sequence</string>
-       </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="MatplotlibWidget" name="sequence_plot" native="true"/>
-        </item>
-       </layout>
-      </widget>
-     </widget>
-    </item>
-    <item row="5" column="0" rowspan="3">
-     <spacer name="verticalSpacer_2">
+    <item row="8" column="5">
+     <spacer name="verticalSpacer">
       <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Expanding</enum>
+       <enum>Qt::Horizontal</enum>
       </property>
       <property name="sizeHint" stdset="0">
        <size>
-        <width>20</width>
-        <height>40</height>
+        <width>40</width>
+        <height>20</height>
        </size>
       </property>
      </spacer>
     </item>
-    <item row="6" column="1" rowspan="2">
-     <spacer name="verticalSpacer_3">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>40</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="2" column="0" colspan="2">
-     <widget class="QListWidget" name="lw_atoms">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="dragEnabled">
-       <bool>true</bool>
-      </property>
-      <property name="dragDropMode">
-       <enum>QAbstractItemView::InternalMove</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0" colspan="2">
-     <widget class="QGroupBox" name="gb_atom">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="title">
-       <string>Edit atom</string>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_2">
-       <item row="6" column="0">
-        <widget class="QLabel" name="lbl_value_5">
-         <property name="text">
-          <string>param5</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="2">
-        <widget class="PyScientificSpinBox" name="vary_start_0">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="lbl_value_3">
-         <property name="text">
-          <string>param3</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="3">
-        <widget class="PyScientificSpinBox" name="vary_stop_3">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>Values</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>Start</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="3">
-        <widget class="PyScientificSpinBox" name="vary_stop_4"/>
-       </item>
-       <item row="5" column="1">
-        <widget class="PyScientificSpinBox" name="sb_value_4"/>
-       </item>
-       <item row="1" column="3">
-        <widget class="PyScientificSpinBox" name="vary_stop_0">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="3">
-        <widget class="PyScientificSpinBox" name="vary_stop_1">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="2">
-        <widget class="PyScientificSpinBox" name="vary_start_3">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="2">
-        <widget class="PyScientificSpinBox" name="vary_start_2">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <widget class="QLabel" name="lbl_value_4">
-         <property name="text">
-          <string>param4</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="2">
-        <widget class="PyScientificSpinBox" name="vary_start_1">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="3">
-        <widget class="PyScientificSpinBox" name="vary_stop_2">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="2">
-        <widget class="PyScientificSpinBox" name="vary_start_4"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="lbl_duration">
-         <property name="text">
-          <string>duration</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
-        <widget class="PyScientificSpinBox" name="sb_value_2"/>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="lbl_value_2">
-         <property name="text">
-          <string>param2</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="PyScientificSpinBox" name="sb_value_1"/>
-       </item>
-       <item row="1" column="1">
-        <widget class="PyScientificSpinBox" name="sb_duration">
-         <property name="minimum">
-          <double>0.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1">
-        <widget class="PyScientificSpinBox" name="sb_value_3"/>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="lbl_value_1">
-         <property name="text">
-          <string>param1</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="3">
-        <widget class="QLabel" name="label_5">
-         <property name="text">
-          <string>Stop</string>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="0">
-        <widget class="QLabel" name="lbl_value_6">
-         <property name="text">
-          <string>param6</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="1">
-        <widget class="PyScientificSpinBox" name="sb_value_5"/>
-       </item>
-       <item row="7" column="1">
-        <widget class="PyScientificSpinBox" name="sb_value_6"/>
-       </item>
-       <item row="6" column="2">
-        <widget class="PyScientificSpinBox" name="vary_start_5"/>
-       </item>
-       <item row="7" column="2">
-        <widget class="PyScientificSpinBox" name="vary_start_6"/>
-       </item>
-       <item row="6" column="3">
-        <widget class="PyScientificSpinBox" name="vary_stop_5"/>
-       </item>
-       <item row="7" column="3">
-        <widget class="PyScientificSpinBox" name="vary_stop_6"/>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="4" column="1" rowspan="2">
+    <item row="7" column="0">
      <widget class="QGroupBox" name="groupBox">
       <property name="title">
        <string>Sequence</string>
@@ -318,7 +50,7 @@
        <item row="1" column="0">
         <widget class="QLabel" name="label_8">
          <property name="text">
-          <string>Wait</string>
+          <string>Wait (s)</string>
          </property>
         </widget>
        </item>
@@ -345,7 +77,346 @@
       </layout>
      </widget>
     </item>
-    <item row="4" column="0">
+    <item row="3" column="0" colspan="2">
+     <widget class="QGroupBox" name="gb_atom">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="title">
+       <string>Edit atom</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="3">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Start</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="4">
+        <widget class="PyScientificSpinBox" name="vary_stop_3">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="4">
+        <widget class="PyScientificSpinBox" name="vary_stop_1">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Values</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="lbl_value_2">
+         <property name="minimumSize">
+          <size>
+           <width>90</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>param2</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="lbl_value_3">
+         <property name="minimumSize">
+          <size>
+           <width>90</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>param3</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="2">
+        <widget class="PyScientificSpinBox" name="sb_value_2"/>
+       </item>
+       <item row="1" column="3">
+        <widget class="PyScientificSpinBox" name="vary_start_0">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="2">
+        <widget class="PyScientificSpinBox" name="sb_value_3"/>
+       </item>
+       <item row="0" column="4">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Stop</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="2">
+        <widget class="PyScientificSpinBox" name="sb_value_4"/>
+       </item>
+       <item row="3" column="3">
+        <widget class="PyScientificSpinBox" name="vary_start_2">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="4">
+        <widget class="PyScientificSpinBox" name="vary_stop_2">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="4">
+        <widget class="PyScientificSpinBox" name="vary_stop_4"/>
+       </item>
+       <item row="1" column="4">
+        <widget class="PyScientificSpinBox" name="vary_stop_0">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="3">
+        <widget class="PyScientificSpinBox" name="vary_start_3">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="3">
+        <widget class="PyScientificSpinBox" name="vary_start_1">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="3">
+        <widget class="PyScientificSpinBox" name="vary_start_4"/>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="lbl_value_4">
+         <property name="minimumSize">
+          <size>
+           <width>90</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>param4</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="PyScientificSpinBox" name="sb_duration">
+         <property name="minimum">
+          <double>0.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="lbl_value_1">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>90</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>param1</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="PyScientificSpinBox" name="sb_value_1"/>
+       </item>
+       <item row="7" column="2">
+        <widget class="PyScientificSpinBox" name="sb_value_6"/>
+       </item>
+       <item row="6" column="2">
+        <widget class="PyScientificSpinBox" name="sb_value_5"/>
+       </item>
+       <item row="6" column="3">
+        <widget class="PyScientificSpinBox" name="vary_start_5"/>
+       </item>
+       <item row="7" column="3">
+        <widget class="PyScientificSpinBox" name="vary_start_6"/>
+       </item>
+       <item row="7" column="4">
+        <widget class="PyScientificSpinBox" name="vary_stop_6"/>
+       </item>
+       <item row="6" column="4">
+        <widget class="PyScientificSpinBox" name="vary_stop_5"/>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="lbl_value_6">
+         <property name="minimumSize">
+          <size>
+           <width>90</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>param6</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="lbl_value_5">
+         <property name="minimumSize">
+          <size>
+           <width>90</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>param5</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="lbl_duration">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>90</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>duration</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="1" column="0" colspan="2">
+     <layout class="QGridLayout" name="gridLayout_5">
+      <item row="0" column="1">
+       <widget class="QPushButton" name="pb_ramp">
+        <property name="text">
+         <string>Add Ramp</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QPushButton" name="pb_constant">
+        <property name="text">
+         <string>Add Constant</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="pb_gaussian">
+        <property name="text">
+         <string>Add Gaussian</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QPushButton" name="pb_gaussian_ft">
+        <property name="text">
+         <string>Add GaussianFT</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="5" rowspan="8" colspan="2">
+     <widget class="QTabWidget" name="preview">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="preview_segment">
+       <attribute name="title">
+        <string>Segment</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="MatplotlibWidget" name="segment_plot" native="true"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="preview_sequence">
+       <attribute name="title">
+        <string>Sequence</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="MatplotlibWidget" name="sequence_plot" native="true"/>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item row="4" column="0" rowspan="2">
      <widget class="QGroupBox" name="gb_mark">
       <property name="title">
        <string>Mark</string>
@@ -397,37 +468,109 @@
       </layout>
      </widget>
     </item>
-    <item row="1" column="0" colspan="2">
-     <layout class="QGridLayout" name="gridLayout_5">
+    <item row="2" column="0" colspan="2">
+     <widget class="QListWidget" name="lw_atoms">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="dragEnabled">
+       <bool>true</bool>
+      </property>
+      <property name="dragDropMode">
+       <enum>QAbstractItemView::InternalMove</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="6">
+     <layout class="QGridLayout" name="gridLayout_7">
       <item row="0" column="0">
-       <widget class="QPushButton" name="pb_constant">
+       <widget class="QLabel" name="label_9">
         <property name="text">
-         <string>Add Constant</string>
+         <string>Sample rate S/s</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QPushButton" name="pb_ramp">
+      <item row="2" column="1">
+       <widget class="QLabel" name="label_12">
         <property name="text">
-         <string>Add Ramp</string>
+         <string>squence:</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QPushButton" name="pb_sine">
+      <item row="2" column="2">
+       <widget class="QLabel" name="lbl_nb_seq">
         <property name="text">
-         <string>Add Sine</string>
+         <string>0</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="lbl_nb_seg">
+        <property name="text">
+         <string>1000</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QPushButton" name="pb_gaussian_sine">
+       <widget class="QLabel" name="label_11">
         <property name="text">
-         <string>Add Gaussian Sine</string>
+         <string>segment:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1" colspan="2">
+       <widget class="PyScientificSpinBox" name="sb_sample_rate">
+        <property name="maximum">
+         <double>9999999999.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>Nb sample in</string>
         </property>
        </widget>
       </item>
      </layout>
+    </item>
+    <item row="4" column="1">
+     <widget class="QGroupBox" name="gb_to_ramp">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="title">
+       <string>Convert to ramp in Seq</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_8">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_13">
+         <property name="text">
+          <string>Slope</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="PyScientificSpinBox" name="sb_slope"/>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="6" column="0" colspan="2">
+     <widget class="Line" name="line">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -436,22 +579,15 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1143</width>
-     <height>21</height>
+     <width>1258</width>
+     <height>31</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuExport_2">
     <property name="title">
      <string>Export</string>
     </property>
-    <addaction name="actionSequence"/>
     <addaction name="export_code"/>
-   </widget>
-   <widget class="QMenu" name="menuImport">
-    <property name="title">
-     <string>Import</string>
-    </property>
-    <addaction name="actionCode_3"/>
    </widget>
    <widget class="QMenu" name="menuPlot">
     <property name="title">
@@ -461,7 +597,6 @@
     <addaction name="action_highlight"/>
    </widget>
    <addaction name="menuExport_2"/>
-   <addaction name="menuImport"/>
    <addaction name="menuPlot"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -496,24 +631,14 @@
     <string>to .npy file</string>
    </property>
   </action>
-  <action name="actionCode_2">
+  <action name="export_code">
    <property name="text">
-    <string>Code</string>
+    <string>Python Code</string>
    </property>
   </action>
   <action name="actionCode_3">
    <property name="text">
     <string>Code</string>
-   </property>
-  </action>
-  <action name="actionSequence">
-   <property name="text">
-    <string>Sequence</string>
-   </property>
-  </action>
-  <action name="export_code">
-   <property name="text">
-    <string>Python Code</string>
    </property>
   </action>
   <action name="action_superpose">

@@ -84,7 +84,8 @@ class Constant(AtomSegment):
 
     def getWave(self, sample_rate):
         value, duration = self.get('value'), self.get('duration')
-        return np.full(int(duration*sample_rate), value)
+        wav = np.full(int(duration*sample_rate), value)
+        return wav
 
     def getArea(self):
         return self.get('duration')*self.get('value')
@@ -107,7 +108,6 @@ class Ramp(AtomSegment):
     def getArea(self):
         start, finish, duration = self.get('start'), self.get('finish'), self.get('duration')
         return (start + (finish-start)/2) *duration
-
 
 class Sine(AtomSegment):
     default_name = 'sine'
@@ -133,37 +133,67 @@ class Sine(AtomSegment):
         #raise NotImplementedError()
         return 0 # TODO: implement this
     
-class GaussianSine(AtomSegment):
-    default_name = 'gaussian_sine'
-    param_lbls = ['frequency', 'amplitude', 'phase', 'mu', 'sigma', 'offset']
+class Gaussian(AtomSegment):
+    default_name = 'gaussian'
+    param_lbls = ['sigma', 'amp', 'offset']
     def __init__(self, name=default_name,
-                 params=(.0,.0,.0,.0,.0,.0), 
+                 params=(.0,.0,.0), 
                  duration=.0):
-        # type: str, tuple[float,float,float,float,float,float], float
-        if len(params) != 6:
-            raise ValueError('A gaussian sine has 6 parameters: (freq, ampli, phase, mu, sigma, offset)')
-        super(GaussianSine, self).__init__(name, params, duration, self.param_lbls)
+        # type: str, tuple[float,float,float], float
+        if len(params) != 3:
+            raise ValueError('A gaussian sine has 3 parameters: (sigma, amp, offset). (mu is set to 0)')
+        super(Gaussian, self).__init__(name, params, duration, self.param_lbls)
 
     def getWave(self, sample_rate):
-        freq = self.get('frequency')
-        amp = self.get('amplitude')
-        phase = self.get('phase')
-        mu = self.get('mu')
         sigma = self.get('sigma')
+        mu = 0
+        amp = self.get('amp')
         offset = self.get('offset')
         dur = self.getDuration()
 
-        t = np.linspace(0, dur, int(sample_rate * dur))
-        sine = np.sin(2*np.pi*freq*t + phase)
-        t -= dur/2
+        t = np.linspace(-dur/2, dur/2, int(sample_rate * dur))
         gaussian = np.exp(-(t-mu)**2 / (2*sigma**2))
-        return amp * sine * gaussian + offset
+        return amp * gaussian + offset
 
     def getArea(self):
         #raise NotImplementedError()
         return 0 # TODO: implement this
         
-    
+class GaussianFlatTop(AtomSegment):
+    # TODO: DOESNT WORK
+    default_name = 'gaussian_ft'
+    param_lbls = ['sigma', 'plateau_ratio', 'offset']
+    def __init__(self, name=default_name,
+                 params=(.0,.0,.0,.0), 
+                 duration=.0):
+        # type: str, tuple[float,float,float,float], float
+        if len(params) != 3:
+            raise ValueError('A gaussian flat top has 3 parameters: (sigma, value, offset)')
+        super(GaussianFlatTop, self).__init__(name, params, duration, self.param_lbls)
+
+    def getWave(self, sample_rate):
+        sigma = self.get('sigma')
+        plt_ratio = self.get('plateau_ratio')
+        offset = self.get('offset')
+        dur = self.getDuration()
+
+        num_sample = int(sample_rate * dur)
+        num_plateau = int(plt_ratio * num_sample)
+
+        t = np.linspace(-dur/2, dur/2, int(sample_rate * dur))
+        left_g = np.exp(-(t[:num_plateau]-0)**2 / (2*sigma**2))
+        right_g = np.exp(-(t[num_plateau:]-0)**2 / (2*sigma**2))
+        gaussian_full = np.concatenate((left_g, np.full(num_plateau, 1), right_g))
+
+        start_index = (num_sample-num_plateau)//2
+        return gaussian_full[start_index : start_index+num_plateau]
+
+    def getArea(self):
+        #raise NotImplementedError()
+        return 0 # TODO: implement this
+
+
+
 class Segment(object):
     ''' Represent a concatenation of AtomSegment.
     This is the main class to use, instanciate AtomSegment and Sequence from here:
@@ -224,7 +254,6 @@ class Segment(object):
         # Set a marker on the AtomSegment 'label' if it exists.
         # By default, mark the entire AtomSegment
         # Duration is to mark a part of the AtomSegment
-        # TODO: mark multiple with lists
         if not self._atom_name_exists(label):
             raise NameError('Atom {} does not exist.'.format(label))
         if duration[0] < 0 or duration[1] > 1 or duration[0] > duration[1]:
@@ -297,7 +326,7 @@ class Segment(object):
         # start = value  and  stop = value + duration*slope
         # Made to be called internally when making a sequence
         atom = self.get(label)
-        if not isinstance(atom, Constant):
+        if not type(atom).__name__ == 'Constant': #isinstance issue: need inheritance of object?
             raise TypeError('Can only convert Constant to Ramp')
         value, duration = atom.get('value'), atom.get('duration')
         rmp = Ramp(label, (value, value+duration*slope), duration)
@@ -307,7 +336,7 @@ class Segment(object):
         # If the atom 'label' is a ramp, convert it to a constant with value = start
         # Maybe not useful but at least constantToRamp is reversible
         atom = self.get(label)
-        if not isinstance(atom, Ramp):
+        if not type(atom).__name__ == 'Ramp':
             return
         value, duration = atom.get('start'), atom.get('duration')
         cst = Constant(label, value, duration)
@@ -459,7 +488,7 @@ class Sequence(object):
 
 # to later implement in the awg class
 def sendSequence(awg, seq, sample_rate, marker_low_high=(0,128), wfname='', force=False, ch=1):
-    """ Force: wrtie even a wave with the same name is present """
+    """ Force: write even if a wave with the same name is present """
     # but for now:
     awg_type = type(awg).__name__
     if awg_type not in ['tektronix_AWG']:
@@ -505,7 +534,6 @@ def pulseDraw(obj, sample_rate, y_label='', marker_low_high=(0,1), normalize=Fal
         fig, [ax1, ax2] = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [2, 1]})
     else:
         fig, ax1, ax2 = fig_axes
-    fig.suptitle(obj.name)
     ax1.set_ylabel(y_label)
     ax1.grid(True)
     ax2.set_xlabel('time (s)')
@@ -524,6 +552,7 @@ def pulseDraw(obj, sample_rate, y_label='', marker_low_high=(0,1), normalize=Fal
             pulseDraw(**dict(kwargs, **plot_kwargs))
         return
 
+    fig.suptitle(obj.name)
     # get things and draw things
     wave, marker, timestep = obj.getWave(sample_rate, marker_low_high, 
                                          normalize=normalize)
