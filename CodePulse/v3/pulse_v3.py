@@ -1,5 +1,5 @@
 import numpy as np
-from copy import deepcopy
+from copy import copy, deepcopy
 import matplotlib.pyplot as plt
 
 # "abstract"
@@ -9,7 +9,7 @@ class AtomSegment(object):
     Every parameters has a label at its corresponding index in param_lbls.
     If there is only one paramters, param_vals and param_lbls are still lists.
     Name reserved:
-    - 'compensation'
+    - '_compensation'
     
     '''
     def __init__(self, name, param_vals, duration, param_lbls):
@@ -56,7 +56,6 @@ class AtomSegment(object):
                 'values':self.param_vals}
         
     ## sample rate or atom dependant methods ##
-
     def getMarkWave(self, sample_rate, part=(0.,1.), marker_low_high=(0,1)):
         duration = self.getDuration()
         mark = np.full(int(sample_rate*duration), marker_low_high[0], dtype=np.uint8)
@@ -73,6 +72,7 @@ class AtomSegment(object):
     def getAbsMax(self, sample_rate):
         return max(abs(self.getWave(sample_rate)))
 
+
 class Constant(AtomSegment):
     default_name = 'const'
     param_lbls = ['value']
@@ -81,13 +81,17 @@ class Constant(AtomSegment):
                  duration=.0):
         self.name = name
         super(Constant, self).__init__(name, value, duration, self.param_lbls)
+
     def getWave(self, sample_rate):
         value, duration = self.get('value'), self.get('duration')
         return np.full(int(duration*sample_rate), value)
+
     def getArea(self):
         return self.get('duration')*self.get('value')
         
+
 class Ramp(AtomSegment):
+
     default_name = 'ramp'
     param_lbls = ['start', 'finish']
     def __init__(self, name=default_name,
@@ -95,12 +99,15 @@ class Ramp(AtomSegment):
                  duration=.0):
         # type: str, tuple[float, float], float
         super(Ramp, self).__init__(name, start_finish, duration, self.param_lbls)
+
     def getWave(self, sample_rate):
         wav = np.linspace(self.get('start'), self.get('finish'), int(self.duration*sample_rate))
         return wav
+
     def getArea(self):
         start, finish, duration = self.get('start'), self.get('finish'), self.get('duration')
         return (start + (finish-start)/2) *duration
+
 
 class Sine(AtomSegment):
     default_name = 'sine'
@@ -109,10 +116,10 @@ class Sine(AtomSegment):
                  freq_amp_phase=(.0,.0,.0,.0), 
                  duration=.0):
         # type: str, tuple[float,float,float,float], float
-        print name, freq_amp_phase, duration
         if len(freq_amp_phase) != 4:
             raise ValueError('A sine has 4 parameters: (freq, ampli, phase, offset)')
         super(Sine, self).__init__(name, freq_amp_phase, duration, self.param_lbls)
+
     def getWave(self, sample_rate):
         freq = self.get('frequency')
         amp = self.get('amplitude')
@@ -121,9 +128,41 @@ class Sine(AtomSegment):
         dur = self.getDuration()
         t = np.linspace(0, dur, int(sample_rate * dur))
         return amp * np.sin(2*np.pi*freq*t + phase) + offset
+
     def getArea(self):
         #raise NotImplementedError()
         return 0 # TODO: implement this
+    
+class GaussianSine(AtomSegment):
+    default_name = 'gaussian_sine'
+    param_lbls = ['frequency', 'amplitude', 'phase', 'mu', 'sigma', 'offset']
+    def __init__(self, name=default_name,
+                 params=(.0,.0,.0,.0,.0,.0), 
+                 duration=.0):
+        # type: str, tuple[float,float,float,float,float,float], float
+        if len(params) != 6:
+            raise ValueError('A gaussian sine has 6 parameters: (freq, ampli, phase, mu, sigma, offset)')
+        super(GaussianSine, self).__init__(name, params, duration, self.param_lbls)
+
+    def getWave(self, sample_rate):
+        freq = self.get('frequency')
+        amp = self.get('amplitude')
+        phase = self.get('phase')
+        mu = self.get('mu')
+        sigma = self.get('sigma')
+        offset = self.get('offset')
+        dur = self.getDuration()
+
+        t = np.linspace(0, dur, int(sample_rate * dur))
+        sine = np.sin(2*np.pi*freq*t + phase)
+        t -= dur/2
+        gaussian = np.exp(-(t-mu)**2 / (2*sigma**2))
+        return amp * sine * gaussian + offset
+
+    def getArea(self):
+        #raise NotImplementedError()
+        return 0 # TODO: implement this
+        
     
 class Segment(object):
     ''' Represent a concatenation of AtomSegment.
@@ -155,7 +194,7 @@ class Segment(object):
             self.atoms.append(atomSegment)
             self.atoms_names.append(atomSegment.name)
     
-    def insertNew(self, atomType, atomArgs, duration, name=''):
+    def insertNew(self, atomType, name='', atomArgs=tuple(), duration=0.):
         # type: Type[AtomSegment], tuple, str
         # Create and insert an atom that does not exist yet
         # atomType is a children of the class AtomType
@@ -178,7 +217,7 @@ class Segment(object):
                 raise ValueError('The lists must be the same size.')
 
         for val, duration, name in zip(vals, durations, names):
-            self.insertNew(Constant, val, duration, name)
+            self.insertNew(Constant, name, val, duration)
 
     def mark(self, label, duration=(0.,1.)):
         # type: str , tuple[float \in [0,1]]
@@ -212,8 +251,10 @@ class Segment(object):
         # build timestep
         timestep = np.linspace(0, self.getDuration(), int(len(wave)))
         # handle normalize
-        if normalize:
+        if normalize == True:
             wave = wave / max(abs(wave))
+        elif not isinstance(normalize, bool):
+            wave = wave / normalize
         return wave, marker, timestep
 
     def getDuration(self):
@@ -257,7 +298,7 @@ class Segment(object):
         # Made to be called internally when making a sequence
         atom = self.get(label)
         if not isinstance(atom, Constant):
-            return -1
+            raise TypeError('Can only convert Constant to Ramp')
         value, duration = atom.get('value'), atom.get('duration')
         rmp = Ramp(label, (value, value+duration*slope), duration)
         self.atoms[self._getAtomIndex(label)] = rmp
@@ -272,7 +313,7 @@ class Segment(object):
         cst = Constant(label, value, duration)
         self.atoms[self._getAtomIndex(label)] = cst
 
-    def insertCompensation(self, value, name='compensation'):
+    def insertCompensation(self, value, name='_compensation'):
         # Compute the integral and append a compensation segment at value so the mean is zero.
         # Made to be called by the object itself when making a sequence
         # Best practice to not use this directly but use it trough the makeSequence argument: compensate=value.
@@ -284,7 +325,7 @@ class Segment(object):
         for atom in self.atoms:
             sum += atom.getArea()
         duration = abs(sum/value)
-        self.insertNew(Constant, value, duration, name)
+        self.insertNew(Constant, name, value, duration)
 
     def makeSequence(self, repeat, constant_slope=[], compensate=0, wait_time=0, name=''):
         # A sequence is a concatenation of segments
@@ -349,7 +390,7 @@ class Segment(object):
             if compensate != 0:
                 new_seg.insertCompensation(compensate)
             if wait_time != 0:
-                new_seg.insertNew(Constant, 0, wait_time, 'wait')
+                new_seg.insertNew(Constant, 'wait', 0, wait_time)
             ## segment done
             seq.insertSegment(new_seg)
         return seq
@@ -369,7 +410,7 @@ class Sequence(object):
         self.gen_kwargs = gen_kwargs
     
     def _iter(self):
-        return zip(self.segments, self.segments_names)
+        return zip(self.segments_names, self.segments)
 
     def insertSegment(self, segment):
         # type: Segment
@@ -392,10 +433,13 @@ class Sequence(object):
     def getWave(self, sample_rate, marker_low_high=(0,1), normalize=False):
         full_wave, full_marker = np.empty(0), np.empty(0)
         for seg in self.segments:
-            wave, marker, _ = seg.getWave(sample_rate, marker_low_high, normalize=normalize)
+            wave, marker, _ = seg.getWave(sample_rate, marker_low_high)
             full_wave = np.concatenate((full_wave, wave))
             full_marker = np.concatenate((full_marker, marker))
         timestep = np.linspace(0, self.getDuration(), int(len(full_wave)))
+        # handle normalize
+        if normalize:
+            full_wave = full_wave / max(abs(full_wave))
         return full_wave, full_marker, timestep
     
     def getWaveIndexes(self, sample_rate):
@@ -445,30 +489,50 @@ def sendSequence(awg, seq, sample_rate, marker_low_high=(0,128), wfname='', forc
 def pulseDraw(obj, sample_rate, y_label='', marker_low_high=(0,1), normalize=False,
               no_marks=False, vert_lines=False,
               highlight_atoms=[],
-              fig_axes=(None, None, None)):
+              superpose=False,
+              fig_axes=(None, None, None),
+              **plot_kwargs):
     # Can draw Segment and Sequence
     # highlight_atoms: of the form [('atomName1', 'color1'), ('atomName2','color2']
     #                  the color is optional: ['atomName1', 'atomName2'] also works
+    # superpose: only for sequence: draw all windows on top of eachother with
+    #                               different opacity
     if not isinstance(obj, (Segment, Sequence)):
         raise TypeError('This object can\'t be draw.')
-    wave, marker, timestep = obj.getWave(sample_rate, marker_low_high, 
-                                         normalize=normalize)
+    kwargs=locals()
     if None in fig_axes:
         # init graph
         fig, [ax1, ax2] = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [2, 1]})
     else:
         fig, ax1, ax2 = fig_axes
     fig.suptitle(obj.name)
-    # draw things
-    ax1.plot(timestep, wave)
     ax1.set_ylabel(y_label)
     ax1.grid(True)
+    ax2.set_xlabel('time (s)')
+    ax2.grid(True)
+
+    # handle superpose
+    if isinstance(obj, Sequence) and superpose:
+        if normalize:
+            kwargs['normalize'] = obj.getAbsMax(sample_rate)
+        kwargs['fig_axes'] = (fig, ax1, ax2)
+        plot_kwargs = kwargs.pop('plot_kwargs', {})
+        nb_seg = len(obj.segments)
+        for i, seg in enumerate(obj.segments):
+            kwargs['obj'] = seg
+            plot_kwargs['alpha'] = (i+1.)/nb_seg
+            pulseDraw(**dict(kwargs, **plot_kwargs))
+        return
+
+    # get things and draw things
+    wave, marker, timestep = obj.getWave(sample_rate, marker_low_high, 
+                                         normalize=normalize)
+    ax1.plot(timestep, wave, **plot_kwargs)
     if no_marks:
         fig.delaxes(ax2)
     else:
-        ax2.plot(timestep, marker, color='orange')
-        ax2.set_xlabel('time (s)')
-        ax2.grid(True)
+        plot_kwargs.pop('color', None)
+        ax2.plot(timestep, marker, color='orange', **plot_kwargs)
     # draw extra stuff
     indexes = obj.getWaveIndexes(sample_rate)
     if len(highlight_atoms) > 0:
