@@ -21,34 +21,42 @@ class PBWindow(baseclass, formclass):
         self.setupUi(self)
 
         ## class variables
+        self.loading = False # True when loading a segment or a sequence
         self.segment = model.Segment('Segment')
         self.sequence = None
         self.sample_rate = SAMPLE_RATE
         self.nb_cst, self.nb_rmp = 0, 0 # for naming only
-        self.nb_sine, self.nb_gaussian_sine = 0, 0 # for naming only
+        self.nb_sine, self.nb_gaussian = 0, 0 # for naming only
+        self.nb_gaussian_ft = 0
         self.selected_atom = None # keep the selected atom in the lit widget
         # for varying sequences:
         self.varying_dict = {} # {atomname: [[param], [values]]}
+        # for constant to slope:
+        self.to_slope_dict = {} # {constantAtonName: slope}
+        self.genSequence()
         self.generator = tools.Generator.Generator()
         
-        
         ## initialization
+        self.disable_plot = True # to make the startup faster
         self.lw_atoms.installEventFilter(self)
-        self.updatePlots(clear_first=False)
         self.sb_sample_rate.setValue(self.sample_rate)
 
-        ## Connections ## self.sb_sample_rate.valueChanged.connect(lambda val: self.setSampleRate(val))
+        ## Connections ## 
+        self.sb_sample_rate.valueChanged.connect(lambda val: self.setSampleRate(val))
         self.pb_constant.clicked.connect(lambda: self.addCst())
         self.pb_ramp.clicked.connect(lambda: self.addRmp())
-        self.pb_sine.clicked.connect(lambda: self.addSine())
-        self.pb_gaussian_sine.clicked.connect(lambda: self.addGaussianSine())
+        self.pb_gaussian.clicked.connect(lambda: self.addGaussian())
+        self.pb_gaussian_ft.clicked.connect(lambda: self.addGaussianFT())
+        #self.pb_gaussian_sine.clicked.connect(lambda: self.addGaussianSine())
         self.lw_atoms.itemClicked.connect(self.selectAtom)
         self.lw_atoms.model().rowsMoved.connect(self.swapAtom)
         self.gb_mark.toggled.connect(self.toggleMark)
+        self.gb_to_ramp.toggled.connect(self.toggleConvertToRamp)
 
         # update ui to Atom/Segment/Sequence
         self.sb_mark_start.valueChanged.connect(lambda val: self.changeMark((val, None)))
         self.sb_mark_stop.valueChanged.connect(lambda val: self.changeMark((None, val)))
+        self.sb_slope.valueChanged.connect(lambda val: self.changeConstantSlope(val))
         self.sb_seq_repeat.valueChanged.connect(lambda: self.updatePlotSeq(True))
         self.sb_seq_wait.valueChanged.connect(lambda: self.updatePlotSeq(True))
         self.sb_seq_comp.valueChanged.connect(lambda: self.updatePlotSeq(True))
@@ -77,8 +85,8 @@ class PBWindow(baseclass, formclass):
 
         ## Actions ##
         self.export_code.triggered.connect(self.exportCode)
-        self.action_superpose.triggered.connect(self.updatePlotSeq)
-        self.action_highlight.triggered.connect(self.updatePlots)
+        self.action_superpose.triggered.connect(lambda: self.updatePlotSeq(True))
+        self.action_highlight.triggered.connect(lambda: self.updatePlots(True))
         
 
         ## objects
@@ -86,7 +94,7 @@ class PBWindow(baseclass, formclass):
                           self.sb_value_4, self.sb_value_5, self.sb_value_6]
         self.edit_lbls=  [self.lbl_duration, self.lbl_value_1, self.lbl_value_2, self.lbl_value_3,
                           self.lbl_value_4, self.lbl_value_5, self.lbl_value_6]
-        self.edit_starts=[self.vary_start_0, self.vary_start_1, self.vary_start_2, self.vary_start_3,
+        self.edit_starts=[self.vary_start_0, self.vary_start_1, self.vary_start_2, self. vary_start_3,
                           self.vary_start_4, self.vary_start_5, self.vary_start_6]
         self.edit_stops= [self.vary_stop_0, self.vary_stop_1, self.vary_stop_2, self.vary_stop_3,
                           self.vary_stop_4, self.vary_stop_5, self.vary_stop_6]
@@ -94,6 +102,9 @@ class PBWindow(baseclass, formclass):
         for row_id in range(1, self.max_param):
             self.uiShowEditValuesRow(row_id, False)
         
+
+        self.disable_plot = False
+
     ## Functions connected to ui events ## 
     def swapAtom(self):
         new_lbl_list = [self.lw_atoms.item(i).text() for i in range(self.lw_atoms.count())]
@@ -106,24 +117,28 @@ class PBWindow(baseclass, formclass):
         self.sample_rate = val
         self.updatePlots()
 
-    def addCst(self, param_vals=.0, duration=1):
+    def addCst(self, param_vals=.0, duration=1.):
         self.addAtom(model.Constant, param_vals, duration, 'const_'+str(self.nb_cst))
         self.nb_cst += 1
-    def addRmp(self, param_vals=(0,1), duration=1):
+    def addRmp(self, param_vals=(0.,1.), duration=1.):
         self.addAtom(model.Ramp, param_vals, duration, 'ramp_'+str(self.nb_rmp))
         self.nb_rmp += 1
-    def addSine(self, param_vals=(1,1,0,0), duration=1):
+    def addSine(self, param_vals=(1.,1.,0.,0.), duration=1.):
         self.addAtom(model.Sine, param_vals, duration, 'sine_'+str(self.nb_sine))
         self.nb_sine += 1
-    def addGaussianSine(self, param_vals=(1,1,0,0,0.1,0), duration=1):
-        self.addAtom(model.GaussianSine, param_vals, duration, 'gaussian_sine_'+str(self.nb_gaussian_sine))
-        self.nb_gaussian_sine += 1
+    def addGaussian(self, param_vals=(0.01,1.,0.), duration=1.):
+        self.addAtom(model.Gaussian, param_vals, duration, 'gaussian_'+str(self.nb_gaussian))
+        self.nb_gaussian += 1
+    def addGaussianFT(self, param_vals=(0,.1,2,0), duration=1.):
+        self.addAtom(model.GaussianFlatTop, param_vals, duration, 'gaussian_ft_'+str(self.nb_gaussian_ft))
+        self.nb_gaussian_ft += 1
     def addAtom(self, atomType, atomArgs, duration, name):
         # add atom to the model (segment) AND to the interface
         atom = atomType(name, atomArgs, duration)
         self.segment.insert(atom)
         atom_item = QtWidgets.QListWidgetItem(atom.name)
         self.lw_atoms.addItem(atom_item)
+        self.lw_atoms.setCurrentItem(atom_item)
         self.varying_dict[atom.name] = [['duration']+atom.param_lbls]
         self.varying_dict[atom.name].append([(0,0)]*(len(atom.param_lbls)+1))
         self.selectAtom(atom_item)
@@ -133,6 +148,7 @@ class PBWindow(baseclass, formclass):
         id = self.segment._getAtomIndex(name)
         self.segment.atoms.pop(id)
         self.segment.atoms_names.pop(id)
+        self.segment.marks_dict.pop(name, None)
         self.varying_dict.pop(name)
         self.updatePlots()
 
@@ -140,19 +156,29 @@ class PBWindow(baseclass, formclass):
         # not implemented in the model so the hard work is done here
         atom = self.segment.get(old_name)
         id = self.segment._getAtomIndex(old_name)
-        vary = self.varying_dict.pop(old_name)
         self.segment.atoms_names[id] = new_name
+        mark = self.segment.marks_dict.pop(old_name, None)
+        vary = self.varying_dict.pop(old_name, None)
+        if mark is not None:
+            self.segment.marks_dict[new_name] = mark
+        if vary is not None:
+            self.varying_dict[new_name] = vary
         atom.name = new_name
-        self.varying_dict[new_name] = vary
+        self.disable_plot = True #TODO: wrapper no_redraw
         self.updateAtomUiEdit()
+        self.disable_plot = False
     
     def selectAtom(self, item):
         # exec when an atom from the list is selected
         # update the class variable self.selected_atom
         atom = self.segment.get(item.text())
         self.selected_atom = atom
+        self.disable_plot = True # redraw only once at the end
         self.updateAtomUiEdit()
         self.updateAtomUiMark()
+        self.updateAtomUiSlope()
+        self.disable_plot = False
+        self.updatePlots()
     
     def toggleMark(self, new_state):
         # exec when toggling mark checkbox (!= changeMark)
@@ -162,6 +188,11 @@ class PBWindow(baseclass, formclass):
            new_duration = (0,1)
         self.sb_mark_start.setValue(new_duration[0])
         self.sb_mark_stop.setValue(new_duration[1])
+    
+    def toggleConvertToRamp(self, new_state):
+        # exec when toggling convert_to_ramp groupbox (!= changeConstantSlope)
+        if new_state == False:
+            self.sb_slope.setValue(0)
 
     def updateVarying(self, row_id):
         # set varying for atom based on spinboxes values
@@ -201,6 +232,16 @@ class PBWindow(baseclass, formclass):
         self.sb_mark_start.setValue(duration[0])
         self.sb_mark_stop.setValue(duration[1])
         self.gb_mark.setChecked(duration != (0,0))
+    
+    def updateAtomUiSlope(self):
+        atom = self.selected_atom
+        if not type(atom).__name__ == 'Constant':
+            self.gb_to_ramp.hide()
+            return
+        self.gb_to_ramp.show()
+        slope = self.to_slope_dict.get(atom.name, 0)
+        self.sb_slope.setValue(slope)
+        self.gb_to_ramp.setChecked(slope != 0)
 
     def setVarying(self, param_id, start_stop, atom=None):
         # set varying for atom to start_stop
@@ -230,6 +271,12 @@ class PBWindow(baseclass, formclass):
         self.segment.mark(atom.name, tuple(duration))
         self.updatePlots()
 
+    def changeConstantSlope(self, val):
+        # change slope value of self.selected_atom
+        atom = self.selected_atom
+        self.to_slope_dict[atom.name] = val
+        self.updatePlotSeq()
+
     ### utility functions ###
     def getNbParam(self, atom=None):
         # return the number of parameters available
@@ -257,6 +304,7 @@ class PBWindow(baseclass, formclass):
         repeat = self.sb_seq_repeat.value()
         compensate = self.sb_seq_comp.value()
         wait_time = self.sb_seq_wait.value()
+        constant_slope=[(name, slope) for name, slope in self.to_slope_dict.items()]
         names_to_change, param_to_change, values_iter = self.getVaryingList()
         self.sequence = self.segment.makeVaryingSequence(repeat,
                                                          names_to_change,
@@ -264,6 +312,7 @@ class PBWindow(baseclass, formclass):
                                                          values_iter,
                                                          compensate=compensate,
                                                          wait_time=wait_time,
+                                                         constant_slope=constant_slope,
                                                          name='Sequence')
     
     ## helper for showing and hiding approriate spinboxes in gb_atom
@@ -279,6 +328,9 @@ class PBWindow(baseclass, formclass):
         self.updatePlotSeq(clear_first)
     
     def updatePlotSeg(self, clear_first=True):
+        if self.disable_plot or self.loading:
+            return
+        #print 'drawing segment'
         if clear_first:
             self.segment_plot.ax1.clear()
             self.segment_plot.ax2.clear()
@@ -287,8 +339,13 @@ class PBWindow(baseclass, formclass):
                     self.segment_plot.ax2)
         self.draw(self.segment, fig_axes)
         self.segment_plot.canvas.draw()
+        self.lbl_nb_seg.setText(
+            str(len(self.segment_plot.ax1.lines[0].get_xdata())))
     
     def updatePlotSeq(self, clear_first=True):
+        if self.disable_plot or self.loading:
+            return
+        #print 'drawing sequence'
         if clear_first:
             self.sequence_plot.ax1.clear()
             self.sequence_plot.ax2.clear()
@@ -298,18 +355,19 @@ class PBWindow(baseclass, formclass):
         self.genSequence()
         self.draw(self.sequence, fig_axes)
         self.sequence_plot.canvas.draw()
+        self.lbl_nb_seq.setText(
+            str(len(self.sequence_plot.ax1.lines[0].get_xdata())))
     
     def draw(self, obj, fig_axes):
         # prepare kwargs for pulseDraw
         atom = self.selected_atom
-        plot_kwargs = {}
         highlight_atoms = []
         if atom is not None and self.action_highlight.isChecked():
             highlight_atoms = [(atom.name, 'hotpink')]
         vert_lines = False
         superpose = self.action_superpose.isChecked()
         color = 'tab:blue' if superpose else None
-            
+        
         model.pulseDraw(obj, self.sample_rate,
                         highlight_atoms=highlight_atoms,
                         vert_lines=vert_lines,
@@ -327,14 +385,18 @@ class PBWindow(baseclass, formclass):
             action = menu.exec_(self.mapToGlobal(event.pos()))
             if action == delete:
                 item = source.itemAt(event.pos())
-                self.removeAtom(item.text())
+                self.disable_plot=True; self.removeAtom(item.text())
                 source.model().removeRow(source.currentRow())
+                fallback_item = self.lw_atoms.currentItem()
+                if fallback_item is not None:
+                    self.selectAtom(fallback_item)
+                self.disable_plot=False; self.updatePlots()
             elif action == rename:
                 item = source.itemAt(event.pos())
                 old_name = item.text()
                 new_name, validate = QtWidgets.QInputDialog.getText(self,
                                 'New atom name', 'New name:', text=item.text())
-                if validate and text != '':
+                if validate and new_name != '':
                     item.setText(new_name)
                     self.renameAtom(old_name, new_name)
             return True
@@ -350,6 +412,9 @@ class PBWindow(baseclass, formclass):
         self.updatePlots()
     
     def loadSeq(self, sequence, sample_rate=SAMPLE_RATE):
+        #TODO: set les num np_cst etc...: avec variables des classes dans pulse_v3
+        self.loading = True
+        self.sb_sample_rate.setValue(sample_rate)
         self.sample_rate = sample_rate
         self.loadSeg(sequence.original_segment)
         gen_kwargs = sequence.gen_kwargs
@@ -364,6 +429,11 @@ class PBWindow(baseclass, formclass):
             atom = self.segment.get(name)
             id = self.varying_dict[atom.name][0].index(param)
             self.setVarying(id, (start, stop), atom)
+        # fill cst to slope
+        for name, slope in gen_kwargs.get('constant_slope', []):
+            self.to_slope_dict[name] = slope
+        self.updateAtomUiSlope()
+        self.loading = False
         self.updatePlots()
 
     def save(self):
