@@ -91,7 +91,6 @@ class Constant(AtomSegment):
         
 
 class Ramp(AtomSegment):
-
     default_name = 'ramp'
     param_lbls = ['start', 'finish']
     def __init__(self, name=default_name,
@@ -133,37 +132,36 @@ class Sine(AtomSegment):
         #raise NotImplementedError()
         return 0 # TODO: implement this
     
-class GaussianSine(AtomSegment):
-    default_name = 'gaussian_sine'
-    param_lbls = ['frequency', 'amplitude', 'phase', 'mu', 'sigma', 'offset']
+class GaussianWrap(AtomSegment):
+    default_name = 'gaussian_'
+    param_lbls = ['mu', 'sigma']
+    atom_segment = None # the segment around which the gaussian is applied
     def __init__(self, name=default_name,
-                 params=(.0,.0,.0,.0,.0,.0), 
-                 duration=.0):
-        # type: str, tuple[float,float,float,float,float,float], float
-        if len(params) != 6:
-            raise ValueError('A gaussian sine has 6 parameters: (freq, ampli, phase, mu, sigma, offset)')
-        super(GaussianSine, self).__init__(name, params, duration, self.param_lbls)
+                 params=(.0,.0), 
+                 atom_segment=None):
+        # type: str, tuple[float,float], AtomSegment
+        if len(params) != 2:
+            raise ValueError('A gaussian wrap has 2 parameters: (mu, sigma)')
+        if name == self.default_name:
+            self.default_name = self.default_name + atom_segment.default_name
+        self.atom_segment = atom_segment
+        duration = atom_segment.getDuration()
+        super(GaussianWrap, self).__init__(name, params, duration, self.param_lbls)
 
     def getWave(self, sample_rate):
-        freq = self.get('frequency')
-        amp = self.get('amplitude')
-        phase = self.get('phase')
         mu = self.get('mu')
         sigma = self.get('sigma')
-        offset = self.get('offset')
         dur = self.getDuration()
 
-        t = np.linspace(0, dur, int(sample_rate * dur))
-        sine = np.sin(2*np.pi*freq*t + phase)
-        t -= dur/2
+        wave = self.atom_segment.getWave(sample_rate)
+        t = np.linspace(-dur/2, dur/2, int(sample_rate * dur))
         gaussian = np.exp(-(t-mu)**2 / (2*sigma**2))
-        return amp * sine * gaussian + offset
+        return wave * gaussian
 
     def getArea(self):
         #raise NotImplementedError()
         return 0 # TODO: implement this
-        
-    
+
 class Segment(object):
     ''' Represent a concatenation of AtomSegment.
     This is the main class to use, instanciate AtomSegment and Sequence from here:
