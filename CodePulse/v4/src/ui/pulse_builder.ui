@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>846</width>
+    <height>613</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_4">
+    <item>
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QWidget" name="verticalLayoutWidget_2">
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QPushButton" name="bt_add_segment">
+            <property name="text">
+             <string>Add segment</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="bt_rm_segment">
+            <property name="text">
+             <string>Remove segment</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QTreeWidget" name="tree">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <column>
+           <property name="text">
+            <string>Segment Name</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Value</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Sweep</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Start</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Finish</string>
+           </property>
+          </column>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="verticalLayoutWidget">
+       <layout class="QGridLayout" name="gridLayout_6" columnstretch="0,0">
+        <item row="1" column="1">
+         <widget class="QGroupBox" name="groupBox">
+          <property name="title">
+           <string>Plot Sequence</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_7">
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>Total duration</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="PyScientificSpinBox" name="sb_sample_rate">
+             <property name="maximum">
+              <double>9999999.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>1000.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLabel" name="duration_label">
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLabel" name="nbpts_label">
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Sample rate</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>Number of point</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QGroupBox" name="groupBox_2">
+          <property name="title">
+           <string>Sweep</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_8">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>Count</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QSpinBox" name="sb_sweep_count"/>
+           </item>
+           <item row="1" column="1">
+            <widget class="PyScientificSpinBox" name="sb_compensate"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Compensate</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="0" column="0" colspan="2">
+         <widget class="QTabWidget" name="plots">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="tab">
+           <attribute name="title">
+            <string>Segment</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_2">
+            <item row="0" column="0">
+             <widget class="MatplotlibWidget" name="plot_segment" native="true">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tab_2">
+           <attribute name="title">
+            <string>Sequence</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout">
+            <item row="0" column="0">
+             <widget class="MatplotlibWidget" name="plot_sequence" native="true"/>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>846</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuPlot">
+    <property name="title">
+     <string>Plot</string>
+    </property>
+    <addaction name="en_plots"/>
+    <addaction name="separator"/>
+    <addaction name="en_superpose"/>
+    <addaction name="en_highlight"/>
+   </widget>
+   <widget class="QMenu" name="menuExport">
+    <property name="title">
+     <string>Export</string>
+    </property>
+    <addaction name="action_export"/>
+   </widget>
+   <addaction name="menuPlot"/>
+   <addaction name="menuExport"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="en_superpose">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Superpose</string>
+   </property>
+  </action>
+  <action name="en_highlight">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Highlight</string>
+   </property>
+  </action>
+  <action name="en_plots">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Enable</string>
+   </property>
+  </action>
+  <action name="action_export">
+   <property name="text">
+    <string>Python code</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MatplotlibWidget</class>
+   <extends>QWidget</extends>
+   <header>src.MatplotlibWidget</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PyScientificSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header>pyHegel.gui.ScientificSpinBox</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
